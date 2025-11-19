@@ -46,8 +46,8 @@ export const redirectUrisSchema = z
   .min(1, 'At least one redirect URI is required');
 
 // CORS origins (array, for public clients)
-export const corsOriginsSchema = z
-  .array(
+export const corsOriginsSchema = z.optional(
+  z.array(
     z
       .string()
       .url('Each CORS origin must be a valid URL')
@@ -60,7 +60,7 @@ export const corsOriginsSchema = z
         { message: 'CORS origins must be just the origin (e.g., https://example.com)' }
       )
   )
-  .optional();
+);
 
 // Scopes (space-separated string or array)
 export const allowedScopesSchema = z
@@ -77,10 +77,13 @@ export const clientNameSchema = z
   .trim();
 
 // URLs
-export const urlSchema = z.string().url('Must be a valid URL').optional().or(z.literal(''));
+export const urlSchema = z.union([
+  z.optional(z.string().url('Must be a valid URL')),
+  z.literal(''),
+]);
 
 // Email addresses (for contacts)
-export const emailArraySchema = z.array(z.string().email('Invalid email format')).optional();
+export const emailArraySchema = z.optional(z.array(z.string().email('Invalid email format')));
 
 /**
  * Create Client Request
@@ -90,7 +93,7 @@ export const createClientRequestSchema = z
   .object({
     name: clientNameSchema,
     clientType: clientTypeSchema,
-    organizationId: z.string().uuid().optional().or(z.literal('')),
+    organizationId: z.union([z.optional(z.string().uuid()), z.literal('')]),
     redirectUris: redirectUrisSchema,
     grantTypes: grantTypesSchema,
     allowedScopes: allowedScopesSchema,
@@ -130,17 +133,17 @@ export type CreateClientRequest = z.infer<typeof createClientRequestSchema>;
  * PUT /admin/clients/:id
  */
 export const updateClientRequestSchema = z.object({
-  name: clientNameSchema.optional(),
-  redirectUris: redirectUrisSchema.optional(),
-  grantTypes: grantTypesSchema.optional(),
-  allowedScopes: allowedScopesSchema.optional(),
+  name: z.optional(clientNameSchema),
+  redirectUris: z.optional(redirectUrisSchema),
+  grantTypes: z.optional(grantTypesSchema),
+  allowedScopes: z.optional(allowedScopesSchema),
   logoUrl: urlSchema,
   allowedCorsOrigins: corsOriginsSchema,
   termsUrl: urlSchema,
   privacyUrl: urlSchema,
   homepageUrl: urlSchema,
   contacts: emailArraySchema,
-  isActive: z.boolean().optional(),
+  isActive: z.optional(z.boolean()),
 });
 
 export type UpdateClientRequest = z.infer<typeof updateClientRequestSchema>;
@@ -150,24 +153,17 @@ export type UpdateClientRequest = z.infer<typeof updateClientRequestSchema>;
  * GET /admin/clients
  */
 export const clientListQuerySchema = z.object({
-  organizationId: z.string().uuid().optional(),
-  clientType: clientTypeSchema.optional(),
-  isActive: z
-    .string()
-    .transform((val) => val === 'true')
-    .optional(),
+  organizationId: z.optional(z.string().uuid()),
+  clientType: z.optional(clientTypeSchema),
+  isActive: z.optional(z.string().transform((val) => val === 'true')),
   page: z
-    .string()
-    .transform((val) => parseInt(val, 10))
-    .pipe(z.number().int().positive())
-    .optional()
-    .default(1),
+    .optional(z.string())
+    .transform((val) => (val ? parseInt(val, 10) : 1))
+    .pipe(z.number().int().positive()),
   limit: z
-    .string()
-    .transform((val) => parseInt(val, 10))
-    .pipe(z.number().int().positive().max(100))
-    .optional()
-    .default(20),
+    .optional(z.string())
+    .transform((val) => (val ? parseInt(val, 10) : 20))
+    .pipe(z.number().int().positive().max(100)),
 });
 
 export type ClientListQuery = z.infer<typeof clientListQuerySchema>;

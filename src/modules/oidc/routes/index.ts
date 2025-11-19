@@ -1,9 +1,9 @@
-import { Router } from 'express';
+import { Router, type Router as RouterType } from 'express';
 import { discoveryController } from '../controllers/DiscoveryController.js';
 import { jwksController } from '../controllers/JWKSController.js';
 import { userInfoController } from '../controllers/UserInfoController.js';
 
-const router = Router();
+const router: RouterType = Router();
 
 /**
  * OIDC Discovery Endpoints

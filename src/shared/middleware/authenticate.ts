@@ -48,7 +48,7 @@ export function requireSession(req: Request, res: Response, next: NextFunction):
  * Optional session authentication
  * Attaches user info if session exists, but doesn't require it
  */
-export function optionalSession(req: Request, res: Response, next: NextFunction): void {
+export function optionalSession(req: Request, _res: Response, next: NextFunction): void {
   const authReq = req as AuthenticatedRequest;
 
   if (req.session?.userId) {
@@ -67,8 +67,8 @@ export function optionalSession(req: Request, res: Response, next: NextFunction)
  * Verifies access token from Authorization header
  * Used for API routes (userinfo, introspection, etc.)
  */
-export function requireBearerToken(req: Request, res: Response, next: NextFunction): void {
-  const _authReq = req as AuthenticatedRequest;
+export function requireBearerToken(req: Request, _res: Response, _next: NextFunction): void {
+  // const _authReq = req as AuthenticatedRequest;
   const authHeader = req.headers.authorization;
 
   if (!authHeader?.startsWith('Bearer ')) {
@@ -109,24 +109,23 @@ export function requireBearerToken(req: Request, res: Response, next: NextFuncti
  * Verifies client credentials from Authorization header or request body
  * Used for token endpoint and other client-authenticated endpoints
  */
-export function requireClientAuth(req: Request, res: Response, next: NextFunction): void {
-  const _authReq = req as AuthenticatedRequest;
+export function requireClientAuth(req: Request, _res: Response, _next: NextFunction): void {
+  // const _authReq = req as AuthenticatedRequest;
 
   let clientId: string | undefined;
-  let _clientSecret: string | undefined;
+  // let _clientSecret: string | undefined;
 
   // Try to get credentials from Authorization header (Basic Auth)
   const authHeader = req.headers.authorization;
   if (authHeader?.startsWith('Basic ')) {
     const base64Credentials = authHeader.substring(6);
     const credentials = Buffer.from(base64Credentials, 'base64').toString('utf-8');
-    [clientId, _clientSecret] = credentials.split(':');
+    [clientId] = credentials.split(':');
   }
 
   // Fall back to request body (client_secret_post)
   if (!clientId) {
     clientId = req.body.client_id;
-    _clientSecret = req.body.client_secret;
   }
 
   if (!clientId) {

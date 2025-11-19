@@ -138,7 +138,7 @@ export class TokenService {
     // Parse scopes to determine which claims to include
     const scopes = scope.split(' ');
     const includeEmail = scopes.includes('email');
-    const _includeProfile = scopes.includes('profile');
+    // const _includeProfile = scopes.includes('profile'); // TODO: implement profile claims
 
     // Create ID token payload
     const payload: IDTokenPayload = {

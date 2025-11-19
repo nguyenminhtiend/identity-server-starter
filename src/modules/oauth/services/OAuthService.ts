@@ -76,10 +76,8 @@ export interface TokenResponse {
  */
 export class OAuthService {
   private tokenService: TokenService;
-  private issuer: string;
 
   constructor(issuer: string) {
-    this.issuer = issuer;
     this.tokenService = new TokenService(issuer);
   }
 
@@ -470,6 +468,23 @@ export class OAuthService {
   }
 
   /**
+   * Get refresh token data by token string
+   * @param token - Refresh token string
+   * @returns Refresh token data or null
+   */
+  async getRefreshToken(token: string): Promise<any> {
+    const tokenHash = sha256Hash(token);
+
+    const [refreshToken] = await db
+      .select()
+      .from(refreshTokens)
+      .where(eq(refreshTokens.tokenHash, tokenHash))
+      .limit(1);
+
+    return refreshToken ?? null;
+  }
+
+  /**
    * Revoke a refresh token
    * @param token - Refresh token to revoke
    */
@@ -480,6 +495,46 @@ export class OAuthService {
       .update(refreshTokens)
       .set({ revoked: true })
       .where(eq(refreshTokens.tokenHash, tokenHash));
+  }
+
+  /**
+   * Revoke a token (refresh token or access token)
+   * @param token - Token to revoke
+   * @param clientId - Client UUID
+   * @param tokenTypeHint - Token type hint
+   */
+  async revokeToken(token: string, _clientId: string, tokenTypeHint?: string): Promise<void> {
+    // For now, we only support revoking refresh tokens
+    // Access tokens (JWTs) are stateless and cannot be revoked
+    // In a production system, you might maintain a revocation list
+    if (tokenTypeHint === 'access_token') {
+      // Access tokens can't be revoked (they're stateless JWTs)
+      // In production, implement a token revocation list if needed
+      return;
+    }
+
+    // Try to revoke as refresh token
+    await this.revokeRefreshToken(token);
+  }
+
+  /**
+   * Validate client secret for a given client
+   * @param clientId - Client UUID (not client_id string)
+   * @param clientSecret - Client secret to validate
+   * @returns True if secret is valid
+   */
+  async validateClientSecret(clientId: string, clientSecret: string): Promise<boolean> {
+    const [client] = await db
+      .select()
+      .from(clients)
+      .where(and(eq(clients.id, clientId), eq(clients.isActive, true)))
+      .limit(1);
+
+    if (!client?.clientSecretHash) {
+      return false;
+    }
+
+    return verifyPassword(clientSecret, client.clientSecretHash);
   }
 
   /**

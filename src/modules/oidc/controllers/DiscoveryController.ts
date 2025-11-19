@@ -10,7 +10,7 @@ export class DiscoveryController {
    * GET /.well-known/openid-configuration
    * Returns the OpenID Connect Discovery Document
    */
-  getDiscoveryDocument(req: Request, res: Response, next: NextFunction): void {
+  getDiscoveryDocument(_req: Request, res: Response, next: NextFunction): void {
     try {
       const discoveryDocument = oidcService.getDiscoveryDocument();
 

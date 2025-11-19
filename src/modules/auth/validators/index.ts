@@ -42,7 +42,7 @@ export const usernameSchema = z
 export const loginRequestSchema = z.object({
   email: emailSchema,
   password: z.string().min(1, 'Password is required'),
-  remember: z.boolean().optional().default(false),
+  remember: z.optional(z.boolean()).default(false),
 });
 
 export type LoginRequest = z.infer<typeof loginRequestSchema>;
@@ -130,8 +130,8 @@ export type ChangePasswordRequest = z.infer<typeof changePasswordRequestSchema>;
  * PUT /profile
  */
 export const updateProfileRequestSchema = z.object({
-  email: emailSchema.optional(),
-  username: usernameSchema.optional(),
+  email: z.optional(emailSchema),
+  username: z.optional(usernameSchema),
   // Add other profile fields as needed
 });
 

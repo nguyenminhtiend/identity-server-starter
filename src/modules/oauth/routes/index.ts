@@ -1,25 +1,23 @@
-import { Router } from 'express';
+import { Router, type Router as RouterType } from 'express';
 import { AuthorizeController } from '../controllers/AuthorizeController';
 import { TokenController } from '../controllers/TokenController';
 import { RevokeController } from '../controllers/RevokeController';
 import { IntrospectController } from '../controllers/IntrospectController';
 import { OAuthService } from '../services/OAuthService';
 import { TokenService } from '../services/TokenService';
-import { PKCEService } from '../services/PKCEService';
-import { db } from '../../../shared/database';
+import { config } from '../../../shared/config';
 
 // Initialize services
-const oauthService = new OAuthService(db);
-const tokenService = new TokenService();
-const pkceService = new PKCEService();
+const oauthService = new OAuthService(config.issuer);
+const tokenService = new TokenService(config.issuer);
 
 // Initialize controllers
-const authorizeController = new AuthorizeController(oauthService, pkceService);
-const tokenController = new TokenController(oauthService, tokenService, pkceService);
+const authorizeController = new AuthorizeController(oauthService);
+const tokenController = new TokenController(oauthService, tokenService);
 const revokeController = new RevokeController(oauthService);
 const introspectController = new IntrospectController(oauthService, tokenService);
 
-const router = Router();
+const router: RouterType = Router();
 
 /**
  * OAuth 2.0 Authorization Endpoint

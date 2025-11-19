@@ -4,9 +4,9 @@ import { type OAuthService } from '../services/OAuthService';
 
 const revokeSchema = z.object({
   token: z.string().min(1),
-  token_type_hint: z.enum(['access_token', 'refresh_token']).optional(),
+  token_type_hint: z.optional(z.enum(['access_token', 'refresh_token'])),
   client_id: z.string().min(1),
-  client_secret: z.string().optional(),
+  client_secret: z.optional(z.string()),
 });
 
 export class RevokeController {

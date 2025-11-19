@@ -5,9 +5,9 @@ import { type TokenService } from '../services/TokenService';
 
 const introspectSchema = z.object({
   token: z.string().min(1),
-  token_type_hint: z.enum(['access_token', 'refresh_token']).optional(),
+  token_type_hint: z.optional(z.enum(['access_token', 'refresh_token'])),
   client_id: z.string().min(1),
-  client_secret: z.string().optional(),
+  client_secret: z.optional(z.string()),
 });
 
 export class IntrospectController {
@@ -105,7 +105,10 @@ export class IntrospectController {
   /**
    * Introspect a refresh token
    */
-  private async introspectRefreshToken(token: string, clientId: string): Promise<Record<string, unknown> | null> {
+  private async introspectRefreshToken(
+    token: string,
+    clientId: string
+  ): Promise<Record<string, unknown> | null> {
     const refreshTokenData = await this.oauthService.getRefreshToken(token);
 
     if (!refreshTokenData) {
@@ -149,11 +152,13 @@ export class IntrospectController {
    */
   private async introspectAccessToken(token: string): Promise<Record<string, unknown> | null> {
     try {
-      const payload = await this.tokenService.verifyAccessToken(token);
+      const result = await this.tokenService.verifyToken(token);
 
-      if (!payload) {
+      if (!result.valid || !result.payload) {
         return null;
       }
+
+      const payload = result.payload as any;
 
       // Token is valid
       return {

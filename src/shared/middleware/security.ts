@@ -135,7 +135,7 @@ export function enforceHttps(req: Request, res: Response, next: NextFunction): v
  * Security headers for OAuth/OIDC responses
  * Adds cache control and no-store directives
  */
-export function oauthSecurityHeaders(req: Request, res: Response, next: NextFunction): void {
+export function oauthSecurityHeaders(_req: Request, res: Response, next: NextFunction): void {
   // Prevent caching of OAuth responses
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Pragma', 'no-cache');

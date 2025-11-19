@@ -206,8 +206,8 @@ export class KeyManagementService {
    * Generate a new RSA key pair
    * @returns Public and private keys in PEM format
    */
-  async generateKeyPair(): Promise<{ publicKey: string; privateKey: string }> {
-    return await generateRSAKeyPair();
+  generateKeyPair(): { publicKey: string; privateKey: string } {
+    return generateRSAKeyPair();
   }
 
   /**
@@ -247,7 +247,7 @@ export class KeyManagementService {
    */
   async createSigningKey(isPrimary = false): Promise<SigningKey> {
     // Generate key pair
-    const { publicKey, privateKey } = await this.generateKeyPair();
+    const { publicKey, privateKey } = this.generateKeyPair();
 
     // Encrypt private key
     const privateKeyEncrypted = this.encryptPrivateKey(privateKey);

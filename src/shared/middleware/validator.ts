@@ -198,13 +198,13 @@ export const commonSchemas = {
    * State parameter validation
    * Optional, but recommended for CSRF protection
    */
-  state: z.string().optional(),
+  state: z.optional(z.string()),
 
   /**
    * Nonce validation (OIDC)
    * Optional, but recommended for replay protection
    */
-  nonce: z.string().optional(),
+  nonce: z.optional(z.string()),
 
   /**
    * Client type validation
@@ -224,8 +224,7 @@ export const commonSchemas = {
    * Pagination limit validation
    */
   paginationLimit: z
-    .string()
-    .optional()
+    .optional(z.string())
     .transform((val) => (val ? parseInt(val, 10) : 20))
     .pipe(z.number().min(1).max(100)),
 
@@ -233,8 +232,7 @@ export const commonSchemas = {
    * Pagination offset validation
    */
   paginationOffset: z
-    .string()
-    .optional()
+    .optional(z.string())
     .transform((val) => (val ? parseInt(val, 10) : 0))
     .pipe(z.number().min(0)),
 };
@@ -259,10 +257,10 @@ export function jsonStringSchema<T>(schema: ZodSchema<T>) {
 /**
  * Helper to create a schema for comma-separated string arrays
  */
-export function commaSeparatedString(itemSchema?: ZodSchema) {
+export function commaSeparatedString(itemSchema?: ZodSchema): any {
   const schema = itemSchema ?? z.string();
   return z
     .string()
     .transform((val) => val.split(',').map((item) => item.trim()))
-    .pipe(z.array(schema)) as any;
+    .pipe(z.array(schema as any));
 }

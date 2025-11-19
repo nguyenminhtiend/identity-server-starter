@@ -2,14 +2,13 @@ import { type Request, type Response, type NextFunction } from 'express';
 import { z } from 'zod';
 import { type OAuthService } from '../services/OAuthService';
 import { type TokenService } from '../services/TokenService';
-import { type PKCEService } from '../services/PKCEService';
 
 const authorizationCodeGrantSchema = z.object({
   grant_type: z.literal('authorization_code'),
   code: z.string().min(1),
   redirect_uri: z.string().url(),
   client_id: z.string().min(1),
-  client_secret: z.string().optional(),
+  client_secret: z.optional(z.string()),
   code_verifier: z.string().min(43).max(128),
 });
 
@@ -17,22 +16,21 @@ const refreshTokenGrantSchema = z.object({
   grant_type: z.literal('refresh_token'),
   refresh_token: z.string().min(1),
   client_id: z.string().min(1),
-  client_secret: z.string().optional(),
-  scope: z.string().optional(),
+  client_secret: z.optional(z.string()),
+  scope: z.optional(z.string()),
 });
 
 const clientCredentialsGrantSchema = z.object({
   grant_type: z.literal('client_credentials'),
   client_id: z.string().min(1),
   client_secret: z.string().min(1),
-  scope: z.string().optional(),
+  scope: z.optional(z.string()),
 });
 
 export class TokenController {
   constructor(
     private oauthService: OAuthService,
-    private tokenService: TokenService,
-    private pkceService: PKCEService
+    private tokenService: TokenService
   ) {}
 
   /**
@@ -228,10 +226,13 @@ export class TokenController {
     const scope = params.scope ?? client.allowedScopes;
 
     // Generate access token (no user context)
-    const accessToken = await this.tokenService.generateAccessToken({
-      clientId: client.id,
+    // For client_credentials grant, we create a minimal user object with just the client ID
+    const accessToken = await this.tokenService.generateAccessToken(
+      { id: client.id, email: '', emailVerified: false },
+      client.id,
       scope,
-    });
+      900
+    );
 
     res.json({
       access_token: accessToken,

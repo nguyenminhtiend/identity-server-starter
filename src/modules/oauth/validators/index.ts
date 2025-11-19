@@ -64,10 +64,10 @@ export const clientIdSchema = z
 export const authorizationCodeSchema = z.string().min(1, 'Authorization code is required');
 
 // State parameter (CSRF protection)
-export const stateSchema = z.string().min(1).max(500).optional();
+export const stateSchema = z.optional(z.string().min(1).max(500));
 
 // Nonce (for OIDC)
-export const nonceSchema = z.string().min(1).max(500).optional();
+export const nonceSchema = z.optional(z.string().min(1).max(500));
 
 /**
  * Authorization Request Validation
@@ -95,7 +95,7 @@ export const tokenRequestAuthCodeSchema = z.object({
   code: authorizationCodeSchema,
   redirect_uri: redirectUriSchema,
   client_id: clientIdSchema,
-  client_secret: z.string().optional(), // Required for confidential clients
+  client_secret: z.optional(z.string()), // Required for confidential clients
   code_verifier: codeVerifierSchema,
 });
 
@@ -109,8 +109,8 @@ export const tokenRequestRefreshSchema = z.object({
   grant_type: z.literal('refresh_token'),
   refresh_token: z.string().min(1),
   client_id: clientIdSchema,
-  client_secret: z.string().optional(), // Required for confidential clients
-  scope: scopeSchema.optional(),
+  client_secret: z.optional(z.string()), // Required for confidential clients
+  scope: z.optional(scopeSchema),
 });
 
 export type TokenRequestRefresh = z.infer<typeof tokenRequestRefreshSchema>;
@@ -123,7 +123,7 @@ export const tokenRequestClientCredentialsSchema = z.object({
   grant_type: z.literal('client_credentials'),
   client_id: clientIdSchema,
   client_secret: z.string().min(1),
-  scope: scopeSchema.optional(),
+  scope: z.optional(scopeSchema),
 });
 
 export type TokenRequestClientCredentials = z.infer<typeof tokenRequestClientCredentialsSchema>;
@@ -145,9 +145,9 @@ export type TokenRequest = z.infer<typeof tokenRequestSchema>;
  */
 export const revokeRequestSchema = z.object({
   token: z.string().min(1),
-  token_type_hint: z.enum(['access_token', 'refresh_token']).optional(),
+  token_type_hint: z.optional(z.enum(['access_token', 'refresh_token'])),
   client_id: clientIdSchema,
-  client_secret: z.string().optional(),
+  client_secret: z.optional(z.string()),
 });
 
 export type RevokeRequest = z.infer<typeof revokeRequestSchema>;
@@ -158,7 +158,7 @@ export type RevokeRequest = z.infer<typeof revokeRequestSchema>;
  */
 export const introspectRequestSchema = z.object({
   token: z.string().min(1),
-  token_type_hint: z.enum(['access_token', 'refresh_token']).optional(),
+  token_type_hint: z.optional(z.enum(['access_token', 'refresh_token'])),
   client_id: clientIdSchema,
   client_secret: z.string().min(1),
 });
@@ -171,8 +171,8 @@ export type IntrospectRequest = z.infer<typeof introspectRequestSchema>;
  */
 export const consentDecisionSchema = z.object({
   decision: z.enum(['allow', 'deny']),
-  scope: scopeSchema.optional(),
-  remember: z.boolean().optional(),
+  scope: z.optional(scopeSchema),
+  remember: z.optional(z.boolean()),
 });
 
 export type ConsentDecision = z.infer<typeof consentDecisionSchema>;

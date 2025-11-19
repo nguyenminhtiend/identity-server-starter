@@ -7,7 +7,7 @@ const authorizeSchema = z.object({
   redirect_uri: z.string().url(),
   response_type: z.literal('code'),
   scope: z.string().min(1),
-  state: z.string().optional(),
+  state: z.optional(z.string()),
   code_challenge: z.string().min(43).max(128),
   code_challenge_method: z.enum(['S256']),
 });
@@ -150,7 +150,6 @@ export class AuthorizeController {
           error: 'unauthorized',
           error_description: 'User not authenticated',
         });
-        return;
         return;
       }
 

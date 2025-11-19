@@ -1,28 +1,24 @@
 import express, { type Application } from 'express';
 import session from 'express-session';
 import { createClient } from 'redis';
-import RedisStore from 'connect-redis';
+import { RedisStore } from 'connect-redis';
 import path from 'path';
 import { config } from './shared/config';
 import { errorHandler } from './shared/middleware/errorHandler';
-import { securityMiddleware, corsMiddleware } from './shared/middleware/security';
-import { rateLimiter } from './shared/middleware/rateLimiter';
+import { helmetConfig, devCorsMiddleware } from './shared/middleware/security';
 import oauthRoutes from './modules/oauth/routes';
 import oidcRoutes from './modules/oidc/routes';
 
 async function createServer(): Promise<Application> {
   const app = express();
 
-  // Trust proxy (important for rate limiting and secure cookies behind reverse proxy)
-  app.set('trust proxy', 1);
-
   // View engine setup
   app.set('view engine', 'ejs');
   app.set('views', path.join(__dirname, 'modules'));
 
   // Security middleware
-  app.use(securityMiddleware);
-  app.use(corsMiddleware);
+  app.use(helmetConfig);
+  app.use(devCorsMiddleware);
 
   // Body parsers
   app.use(express.json());
@@ -63,11 +59,8 @@ async function createServer(): Promise<Application> {
     })
   );
 
-  // Rate limiting
-  app.use(rateLimiter);
-
   // Health check endpoint
-  app.get('/health', (req, res) => {
+  app.get('/health', (_req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 

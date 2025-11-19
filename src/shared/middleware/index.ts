@@ -22,18 +22,6 @@ export {
   type AuthenticatedRequest,
 } from './authenticate.js';
 
-// Rate limiting
-export {
-  tokenRateLimiter,
-  authRateLimiter,
-  loginRateLimiter,
-  registerRateLimiter,
-  adminRateLimiter,
-  generalRateLimiter,
-  jwksRateLimiter,
-  discoveryRateLimiter,
-} from './rateLimiter.js';
-
 // Security
 export {
   helmetConfig,
