@@ -1,7 +1,7 @@
 import { type Request, type Response } from 'express';
 import { z } from 'zod';
-import type { IOAuthService } from '../services/interfaces/IOAuthService.js';
-import type { ITokenService } from '../services/interfaces/ITokenService.js';
+import type { IOAuthService } from '../services/interfaces/oauth-service.interface.js';
+import type { ITokenService } from '../services/interfaces/token-service.interface.js';
 
 const authorizationCodeGrantSchema = z.object({
   grant_type: z.literal('authorization_code'),

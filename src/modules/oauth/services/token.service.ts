@@ -1,6 +1,6 @@
 import * as jose from 'jose';
-import type { IKeyManagementService } from '../../key-management/services/interfaces/IKeyManagementService.js';
-import type { ITokenService } from './interfaces/ITokenService.js';
+import type { IKeyManagementService } from '../../key-management/services/interfaces/key-management-service.interface.js';
+import type { ITokenService } from './interfaces/token-service.interface.js';
 
 /**
  * JWT Token Payload (standard claims)

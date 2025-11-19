@@ -1,6 +1,6 @@
 import { type Request, type Response } from 'express';
 import { z } from 'zod';
-import type { IOAuthService } from '../services/interfaces/IOAuthService.js';
+import type { IOAuthService } from '../services/interfaces/oauth-service.interface.js';
 
 const revokeSchema = z.object({
   token: z.string().min(1),

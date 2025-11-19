@@ -1,8 +1,8 @@
 import { type Request, type Response } from 'express';
 import { z } from 'zod';
-import type { IOAuthService } from '../services/interfaces/IOAuthService.js';
-import type { ITokenService } from '../services/interfaces/ITokenService.js';
-import type { OAuthJWTPayload, RefreshTokenData } from '../../../shared/types/oauth';
+import type { IOAuthService } from '../services/interfaces/oauth-service.interface.js';
+import type { ITokenService } from '../services/interfaces/token-service.interface.js';
+import type { OAuthJWTPayload, RefreshTokenData } from '../../../shared/types/oauth.type.js';
 
 const introspectSchema = z.object({
   token: z.string().min(1),

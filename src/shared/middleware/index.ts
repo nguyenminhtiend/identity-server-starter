@@ -10,7 +10,7 @@ export {
   errorHandler,
   asyncHandler,
   notFoundHandler,
-} from './errorHandler.js';
+} from './error-handler.middleware.js';
 
 // Authentication
 export {
@@ -20,7 +20,7 @@ export {
   requireClientAuth,
   requireAdmin,
   type AuthenticatedRequest,
-} from './authenticate.js';
+} from './authenticate.middleware.js';
 
 // Security
 export {
@@ -31,7 +31,7 @@ export {
   oauthSecurityHeaders,
   csrfProtection,
   generateCsrfToken,
-} from './security.js';
+} from './security.middleware.js';
 
 // Validation
 export {
@@ -43,4 +43,4 @@ export {
   commonSchemas,
   jsonStringSchema,
   commaSeparatedString,
-} from './validator.js';
+} from './validator.middleware.js';

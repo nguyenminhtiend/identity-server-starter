@@ -1,6 +1,6 @@
 import { db, signingKeys } from '../../../shared/database/index.js';
-import { generateRSAKeyPair, encryptAES } from '../../../shared/utils/crypto.js';
-import { logger } from '../../../shared/utils/logger.js';
+import { generateRSAKeyPair, encryptAES } from '../../../shared/utils/crypto.util.js';
+import { logger } from '../../../shared/utils/logger.util.js';
 import * as dotenv from 'dotenv';
 
 dotenv.config();

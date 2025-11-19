@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import * as schema from './schema.js';
+import * as schema from './schema.model.js';
 
 // Get DATABASE_URL from environment
 const connectionString =
@@ -17,7 +17,7 @@ const client = postgres(connectionString, {
 export const db = drizzle(client, { schema });
 
 // Export schema for use in other modules
-export * from './schema.js';
+export * from './schema.model.js';
 
 // Graceful shutdown
 export const closeDatabase = async () => {

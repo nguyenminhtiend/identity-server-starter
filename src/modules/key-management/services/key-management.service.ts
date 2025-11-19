@@ -2,8 +2,8 @@ import crypto from 'crypto';
 import { eq, and, desc } from 'drizzle-orm';
 import type * as jose from 'jose';
 import { db, signingKeys } from '../../../shared/database/index.js';
-import { encryptAES, decryptAES, generateRSAKeyPair } from '../../../shared/utils/crypto.js';
-import { logger } from '../../../shared/utils/logger.js';
+import { encryptAES, decryptAES, generateRSAKeyPair } from '../../../shared/utils/crypto.util.js';
+import { logger } from '../../../shared/utils/logger.util.js';
 
 /**
  * Signing Key interface (from database)

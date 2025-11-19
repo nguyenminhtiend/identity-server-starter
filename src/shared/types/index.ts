@@ -9,4 +9,4 @@ export type {
   AuthorizationRequest,
   ZodValidationError,
   ErrorWithStatus,
-} from './oauth.js';
+} from './oauth.type.js';

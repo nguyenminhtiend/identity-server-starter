@@ -7,4 +7,4 @@ export type {
   IKeyManagementService,
   PublicKeyJWK,
   DecryptedKeyPair,
-} from './IKeyManagementService.js';
+} from './key-management-service.interface.js';

@@ -1,11 +1,11 @@
 import { Router, type Router as RouterType } from 'express';
-import { AuthorizeController } from '../controllers/AuthorizeController';
-import { TokenController } from '../controllers/TokenController';
-import { RevokeController } from '../controllers/RevokeController';
-import { IntrospectController } from '../controllers/IntrospectController';
-import { getService, SERVICE_IDENTIFIERS } from '../../../shared/di/container.js';
-import type { IOAuthService } from '../services/interfaces/IOAuthService.js';
-import type { ITokenService } from '../services/interfaces/ITokenService.js';
+import { AuthorizeController } from '../controllers/authorize-controller.js';
+import { TokenController } from '../controllers/token-controller.js';
+import { RevokeController } from '../controllers/revoke-controller.js';
+import { IntrospectController } from '../controllers/introspect-controller.js';
+import { getService, SERVICE_IDENTIFIERS } from '../../../shared/di/container.config.js';
+import type { IOAuthService } from '../services/interfaces/oauth-service.interface.js';
+import type { ITokenService } from '../services/interfaces/token-service.interface.js';
 
 // Get services from DI container
 const oauthService = getService<IOAuthService>(SERVICE_IDENTIFIERS.OAuthService);

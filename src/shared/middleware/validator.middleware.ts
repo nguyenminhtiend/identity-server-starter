@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { z, type ZodTypeAny, ZodError } from 'zod';
-import { OAuthErrors } from './errorHandler.js';
+import { OAuthErrors } from './error-handler.middleware.js';
 
 /**
  * Validation target: where to validate data from

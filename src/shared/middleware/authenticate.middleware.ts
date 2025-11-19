@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { OAuthErrors } from './errorHandler.js';
+import { OAuthErrors } from './error-handler.middleware.js';
 
 /**
  * Extended Express Request with authenticated user

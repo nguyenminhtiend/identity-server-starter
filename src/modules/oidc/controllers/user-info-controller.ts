@@ -1,8 +1,8 @@
 import { type Request, type Response } from 'express';
-import type { ITokenService } from '../../oauth/services/interfaces/ITokenService.js';
+import type { ITokenService } from '../../oauth/services/interfaces/token-service.interface.js';
 import { db, users } from '../../../shared/database/index.js';
 import { eq } from 'drizzle-orm';
-import type { OAuthJWTPayload } from '../../../shared/types/oauth';
+import type { OAuthJWTPayload } from '../../../shared/types/oauth.type.js';
 
 /**
  * UserInfo Response according to OIDC spec

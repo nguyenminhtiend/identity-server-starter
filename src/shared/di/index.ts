@@ -3,4 +3,9 @@
  * Provides centralized access to DI container and service configuration
  */
 
-export { DIContainer, SERVICE_IDENTIFIERS, configureDIContainer, getService } from './container.js';
+export {
+  DIContainer,
+  SERVICE_IDENTIFIERS,
+  configureDIContainer,
+  getService,
+} from './container.config.js';

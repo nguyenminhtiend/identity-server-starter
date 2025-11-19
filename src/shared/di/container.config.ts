@@ -1,11 +1,11 @@
 import { config } from '../config/index.js';
-import { TokenService } from '../../modules/oauth/services/TokenService.js';
-import { OAuthService } from '../../modules/oauth/services/OAuthService.js';
-import { OIDCService } from '../../modules/oidc/services/OIDCService.js';
-import { KeyManagementService } from '../../modules/key-management/services/KeyManagementService.js';
-import type { ITokenService } from '../../modules/oauth/services/interfaces/ITokenService.js';
-import type { IOAuthService } from '../../modules/oauth/services/interfaces/IOAuthService.js';
-import type { IKeyManagementService } from '../../modules/key-management/services/interfaces/IKeyManagementService.js';
+import { TokenService } from '../../modules/oauth/services/token.service.js';
+import { OAuthService } from '../../modules/oauth/services/oauth.service.js';
+import { OIDCService } from '../../modules/oidc/services/oidc.service.js';
+import { KeyManagementService } from '../../modules/key-management/services/key-management.service.js';
+import type { ITokenService } from '../../modules/oauth/services/interfaces/token-service.interface.js';
+import type { IOAuthService } from '../../modules/oauth/services/interfaces/oauth-service.interface.js';
+import type { IKeyManagementService } from '../../modules/key-management/services/interfaces/key-management-service.interface.js';
 
 /**
  * Transient service descriptor

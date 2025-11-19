@@ -3,7 +3,7 @@
  * Provides centralized access to all OAuth controller classes
  */
 
-export { AuthorizeController } from './AuthorizeController.js';
-export { TokenController } from './TokenController.js';
-export { RevokeController } from './RevokeController.js';
-export { IntrospectController } from './IntrospectController.js';
+export { AuthorizeController } from './authorize-controller.js';
+export { TokenController } from './token-controller.js';
+export { RevokeController } from './revoke-controller.js';
+export { IntrospectController } from './introspect-controller.js';

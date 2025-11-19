@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
-import type { ZodValidationError, ErrorWithStatus } from '../types/oauth';
-import { logger } from '../utils/logger.js';
+import type { ZodValidationError, ErrorWithStatus } from '../types/oauth.type.js';
+import { logger } from '../utils/logger.util.js';
 
 /**
  * Custom error class for OAuth 2.0 errors

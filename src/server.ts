@@ -5,10 +5,10 @@ import { RedisStore } from 'connect-redis';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { config } from './shared/config';
-import { errorHandler } from './shared/middleware/errorHandler';
-import { helmetConfig, devCorsMiddleware } from './shared/middleware/security';
-import { configureDIContainer } from './shared/di/container.js';
-import { logger } from './shared/utils/logger.js';
+import { errorHandler } from './shared/middleware/error-handler.middleware.js';
+import { helmetConfig, devCorsMiddleware } from './shared/middleware/security.middleware.js';
+import { configureDIContainer } from './shared/di/container.config.js';
+import { logger } from './shared/utils/logger.util.js';
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);

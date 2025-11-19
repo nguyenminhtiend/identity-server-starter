@@ -12,11 +12,15 @@ import {
   sha256Hash,
   verifyPassword,
   constantTimeCompare as _constantTimeCompare,
-} from '../../../shared/utils/crypto.js';
-import { PKCEService } from './PKCEService.js';
-import type { UserInfo } from './TokenService.js';
-import type { ITokenService } from './interfaces/ITokenService.js';
-import type { IOAuthService, OAuthClient, TokenResponse } from './interfaces/IOAuthService.js';
+} from '../../../shared/utils/crypto.util.js';
+import { PKCEService } from './pkce.service.js';
+import type { UserInfo } from './token.service.js';
+import type { ITokenService } from './interfaces/token-service.interface.js';
+import type {
+  IOAuthService,
+  OAuthClient,
+  TokenResponse,
+} from './interfaces/oauth-service.interface.js';
 
 /**
  * Authorization code record

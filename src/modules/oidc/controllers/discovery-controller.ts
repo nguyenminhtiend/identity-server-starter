@@ -1,5 +1,5 @@
 import { type Request, type Response } from 'express';
-import type { OIDCService } from '../services/OIDCService.js';
+import type { OIDCService } from '../services/oidc.service.js';
 
 /**
  * Discovery Controller

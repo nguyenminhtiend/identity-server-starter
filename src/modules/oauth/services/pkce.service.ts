@@ -1,4 +1,4 @@
-import { sha256Base64Url } from '../../../shared/utils/crypto';
+import { sha256Base64Url } from '../../../shared/utils/crypto.util.js';
 
 /**
  * PKCE (Proof Key for Code Exchange) Service

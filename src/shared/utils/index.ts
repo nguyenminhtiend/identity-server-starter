@@ -15,10 +15,10 @@ export {
   encryptAES,
   decryptAES,
   generateRSAKeyPair,
-} from './crypto.js';
+} from './crypto.util.js';
 
 // Logger utilities
-export { logger, createLogger } from './logger.js';
+export { logger, createLogger } from './logger.util.js';
 
 // Validation utilities
 export {
@@ -34,7 +34,7 @@ export {
   isValidScope,
   parseScopes,
   hasRequiredScopes,
-} from './validation.js';
+} from './validation.util.js';
 
 // Types
-export type { ValidationErrorResponse } from './validation.js';
+export type { ValidationErrorResponse } from './validation.util.js';

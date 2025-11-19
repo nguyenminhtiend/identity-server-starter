@@ -1,5 +1,5 @@
 import { type Request, type Response } from 'express';
-import type { IKeyManagementService } from '../../key-management/services/interfaces/IKeyManagementService.js';
+import type { IKeyManagementService } from '../../key-management/services/interfaces/key-management-service.interface.js';
 
 /**
  * JWKS Controller

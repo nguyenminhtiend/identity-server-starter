@@ -1,11 +1,11 @@
 import { Router, type Router as RouterType } from 'express';
-import { DiscoveryController } from '../controllers/DiscoveryController.js';
-import { JWKSController } from '../controllers/JWKSController.js';
-import { UserInfoController } from '../controllers/UserInfoController.js';
-import { getService, SERVICE_IDENTIFIERS } from '../../../shared/di/container.js';
-import type { ITokenService } from '../../oauth/services/interfaces/ITokenService.js';
-import type { IKeyManagementService } from '../../key-management/services/interfaces/IKeyManagementService.js';
-import type { OIDCService } from '../services/OIDCService.js';
+import { DiscoveryController } from '../controllers/discovery-controller.js';
+import { JWKSController } from '../controllers/jwks-controller.js';
+import { UserInfoController } from '../controllers/user-info-controller.js';
+import { getService, SERVICE_IDENTIFIERS } from '../../../shared/di/container.config.js';
+import type { ITokenService } from '../../oauth/services/interfaces/token-service.interface.js';
+import type { IKeyManagementService } from '../../key-management/services/interfaces/key-management-service.interface.js';
+import type { OIDCService } from '../services/oidc.service.js';
 
 // Get services from DI container
 const tokenService = getService<ITokenService>(SERVICE_IDENTIFIERS.TokenService);

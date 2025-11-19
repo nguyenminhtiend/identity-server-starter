@@ -3,6 +3,6 @@
  * Provides centralized access to all OpenID Connect controller classes
  */
 
-export { DiscoveryController } from './DiscoveryController.js';
-export { JWKSController } from './JWKSController.js';
-export { UserInfoController } from './UserInfoController.js';
+export { DiscoveryController } from './discovery-controller.js';
+export { JWKSController } from './jwks-controller.js';
+export { UserInfoController } from './user-info-controller.js';
