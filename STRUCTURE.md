@@ -105,44 +105,49 @@ identity-server-starter/
 ## Key Design Principles
 
 ### 1. **Module Isolation**
+
 - Each module is self-contained with its own controllers, services, routes, validators, and views
 - Modules can be developed, tested, and maintained independently
 - Clear boundaries between domains (auth, oauth, oidc, etc.)
 
 ### 2. **Shared Resources**
+
 - Common code lives in `src/shared/`
 - Database schemas centralized in `src/shared/database/schema.ts`
 - Global middleware and utilities available to all modules
 
 ### 3. **Service Layer**
+
 - Business logic isolated in service classes
 - Services are the only layer that interacts with the database
 - Controllers are thin and delegate to services
 
 ### 4. **Database-First Key Management**
+
 - **No filesystem key storage** - keys stored in database from the start
 - Keys encrypted at rest using `KEY_ENCRYPTION_SECRET`
 - Support for multiple concurrent keys (rotation without downtime)
 - JWKS endpoint exposes all active public keys
 
 ### 5. **Scalability**
+
 - Module structure allows easy addition of new features
 - Clear separation of concerns
 - Easy to split into microservices if needed
 
 ## Module Responsibilities
 
-| Module | Purpose |
-|--------|---------|
-| **auth** | User login, registration, consent screens |
-| **oauth** | OAuth 2.0 flows (authorization code, refresh token, PKCE) |
-| **oidc** | OpenID Connect (discovery, JWKS, userinfo) |
-| **user** | User management and profile operations |
-| **client** | OAuth client registration and management |
-| **organization** | Multi-tenant organization support |
-| **session** | Redis-based session management |
-| **key-management** | Cryptographic key lifecycle (generation, rotation) |
-| **admin** | Admin dashboard and operations |
+| Module             | Purpose                                                   |
+| ------------------ | --------------------------------------------------------- |
+| **auth**           | User login, registration, consent screens                 |
+| **oauth**          | OAuth 2.0 flows (authorization code, refresh token, PKCE) |
+| **oidc**           | OpenID Connect (discovery, JWKS, userinfo)                |
+| **user**           | User management and profile operations                    |
+| **client**         | OAuth client registration and management                  |
+| **organization**   | Multi-tenant organization support                         |
+| **session**        | Redis-based session management                            |
+| **key-management** | Cryptographic key lifecycle (generation, rotation)        |
+| **admin**          | Admin dashboard and operations                            |
 
 ## Technology Stack
 

@@ -61,6 +61,7 @@
 ### 1.1 Project Initialization & Structure
 
 **Initialize Project:**
+
 - Run `pnpm init` to create package.json
 - Setup TypeScript config (strict mode, ESNext target)
 - Setup environment files (.env.example, .env)
@@ -138,6 +139,7 @@ identity-server-starter/
 ```
 
 **Module Design Principles:**
+
 - Each module is self-contained with its own controllers, services, routes, validators
 - Modules communicate through well-defined service interfaces
 - Shared code lives in `src/shared/`
@@ -346,6 +348,7 @@ File: `src/modules/key-management/services/KeyManagementService.ts`
 **Purpose**: Centralized cryptographic key lifecycle management
 
 **Core Functionality**:
+
 - Load all active signing keys from database on service initialization
 - Cache keys in memory for performance (refresh periodically)
 - Get primary signing key for creating new JWTs
@@ -355,6 +358,7 @@ File: `src/modules/key-management/services/KeyManagementService.ts`
 - Generate new key pairs and store in database
 
 **Key Rotation Features**:
+
 - `rotateKeys()`: Generate new key pair, mark as primary, deactivate old primary
 - Check `next_rotation_at` and trigger rotation automatically (via cron or startup check)
 - Support configurable overlap period (old keys stay active for JWT verification)
@@ -363,22 +367,24 @@ File: `src/modules/key-management/services/KeyManagementService.ts`
 **Key ID Format**: `YYYY-MM-DD-vN` (e.g., "2025-01-19-v1")
 
 **Future KMS Integration** (Phase 11):
+
 - Abstract interface for KMS providers
 - Implementations for AWS KMS, Azure Key Vault, GCP KMS
 - Fallback to database storage for local/development
 
 **Methods**:
+
 ```typescript
 class KeyManagementService {
-  async initialize(): Promise<void>
-  async getPrimarySigningKey(): Promise<SigningKey>
-  async getPublicKeys(): Promise<PublicKey[]>
-  async verifyToken(token: string): Promise<JWTPayload>
-  async rotateKeys(): Promise<void>
-  async generateKeyPair(): Promise<{ publicKey: string; privateKey: string }>
-  async encryptPrivateKey(privateKey: string): Promise<string>
-  async decryptPrivateKey(encrypted: string): Promise<string>
-  async checkRotationSchedule(): Promise<void>
+  async initialize(): Promise<void>;
+  async getPrimarySigningKey(): Promise<SigningKey>;
+  async getPublicKeys(): Promise<PublicKey[]>;
+  async verifyToken(token: string): Promise<JWTPayload>;
+  async rotateKeys(): Promise<void>;
+  async generateKeyPair(): Promise<{ publicKey: string; privateKey: string }>;
+  async encryptPrivateKey(privateKey: string): Promise<string>;
+  async decryptPrivateKey(encrypted: string): Promise<string>;
+  async checkRotationSchedule(): Promise<void>;
 }
 ```
 
@@ -417,6 +423,7 @@ Files to create in `src/shared/middleware/`:
 ## Phase 5: OAuth 2.0 Endpoints
 
 Files:
+
 - Routes: `src/modules/oauth/routes/index.ts`
 - Controllers: `src/modules/oauth/controllers/`
 
@@ -471,6 +478,7 @@ Response:
 ## Phase 6: OpenID Connect (OIDC)
 
 Files:
+
 - Routes: `src/modules/oidc/routes/index.ts`
 - Controllers: `src/modules/oidc/controllers/`
 
@@ -506,6 +514,7 @@ Returns:
 - Return array of JWK objects with key IDs
 
 Response format:
+
 ```json
 {
   "keys": [
@@ -582,10 +591,12 @@ Files in `src/modules/auth/views/`:
 ### 7.5 Routes
 
 Files:
+
 - `src/modules/auth/routes/index.ts`
 - Controllers: `src/modules/auth/controllers/`
 
 Endpoints:
+
 - `GET /login`
 - `POST /login`
 - `GET /register`
@@ -597,6 +608,7 @@ Endpoints:
 ## Phase 8: Client Management
 
 Files:
+
 - Routes: `src/modules/admin/routes/index.ts`
 - Controllers: `src/modules/admin/controllers/`
 - Services: `src/modules/client/services/ClientService.ts`
@@ -640,11 +652,13 @@ Admin endpoints (protected by admin authentication):
 ### 8.2 Organization Management (if multi-tenant enabled)
 
 Files:
+
 - Routes: `src/modules/organization/routes/index.ts`
 - Controllers: `src/modules/organization/controllers/`
 - Services: `src/modules/organization/services/OrganizationService.ts`
 
 Endpoints:
+
 - `POST /admin/organizations`: Create organization
 - `GET /admin/organizations`: List organizations
 - `GET /admin/organizations/:id`: Get organization details
@@ -654,10 +668,12 @@ Endpoints:
 ### 8.3 Key Management Admin Endpoints
 
 Files:
+
 - Routes: `src/modules/key-management/routes/index.ts`
 - Controllers: `src/modules/key-management/controllers/`
 
 Endpoints:
+
 - `GET /admin/keys`: List all signing keys (active and inactive)
   - Never return private keys, only metadata
 - `POST /admin/keys/rotate`: Manually trigger key rotation
@@ -798,6 +814,7 @@ Files: `src/services/kms/`
 ## Implementation Checklist
 
 ### Phase 1: Foundation
+
 - [ ] Initialize project with package.json, tsconfig.json
 - [ ] Create module-based directory structure
 - [ ] Install dependencies (express, drizzle, redis, jose, bcrypt, etc.)
@@ -805,6 +822,7 @@ Files: `src/services/kms/`
 - [ ] Create .gitignore file
 
 ### Phase 2: Database Layer
+
 - [ ] Define Drizzle schemas in `src/shared/database/schema.ts`: users, organizations, clients, auth codes, refresh tokens, consents, signing_keys
 - [ ] Add client_type, CORS origins, metadata URLs to clients table
 - [ ] Setup database connection in `src/shared/database/index.ts`
@@ -813,6 +831,7 @@ Files: `src/services/kms/`
 - [ ] Create seed script with initial key generation and sample clients (confidential, public, mobile)
 
 ### Phase 3: Core Services
+
 - [ ] Implement crypto utilities in `src/shared/utils/crypto.ts` (bcrypt, random tokens, SHA256, AES encryption)
 - [ ] Build PKCEService in `src/modules/oauth/services/` with S256 validation
 - [ ] Create KeyManagementService in `src/modules/key-management/services/` for database-stored keys with rotation
@@ -821,6 +840,7 @@ Files: `src/services/kms/`
 - [ ] Create validation schemas in each module's validators directory
 
 ### Phase 4: Middleware
+
 - [ ] Build error handler with OAuth error responses in `src/shared/middleware/`
 - [ ] Create authentication middleware (session + JWT)
 - [ ] Implement rate limiting for all endpoints
@@ -828,32 +848,38 @@ Files: `src/services/kms/`
 - [ ] Create request validation middleware
 
 ### Phase 5: OAuth 2.0 Endpoints
+
 - [ ] Implement /oauth/authorize with PKCE enforcement in `src/modules/oauth/`
 - [ ] Build /oauth/token with client type validation
 - [ ] Create /oauth/revoke endpoint
 - [ ] Implement /oauth/introspect endpoint
 
 ### Phase 6: OIDC Endpoints
+
 - [ ] Build OIDC discovery document endpoint in `src/modules/oidc/`
 - [ ] Implement JWKS endpoint with multi-key support
 - [ ] Create /oauth/userinfo endpoint
 
 ### Phase 7: User Interface
+
 - [ ] Create login, registration, consent, and error EJS templates in `src/modules/auth/views/`
 - [ ] Build authentication routes and controllers in `src/modules/auth/`
 
 ### Phase 8: Admin & Client Management
+
 - [ ] Implement client CRUD endpoints in `src/modules/admin/` and `src/modules/client/`
 - [ ] Build client secret regeneration endpoint
 - [ ] Create organization management in `src/modules/organization/` (if multi-tenant)
 - [ ] Implement key rotation admin endpoints in `src/modules/key-management/`
 
 ### Phase 9: Session Management
+
 - [ ] Setup Redis session store with connect-redis in `src/shared/config/session.ts`
 - [ ] Configure secure session cookies
 - [ ] Implement CSRF protection in `src/modules/session/`
 
 ### Phase 10: Testing & Documentation
+
 - [ ] Write unit tests for services (KeyManagementService, TokenService, OAuthService)
 - [ ] Create integration tests for OAuth flows (authorization code, refresh token, PKCE)
 - [ ] Write comprehensive README with setup, API docs, client integration guide
