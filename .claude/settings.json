@@ -1,0 +1,75 @@
+{
+  "customInstructions": [
+    "# Project Coding Conventions",
+    "",
+    "## TypeScript Style",
+    "- Use **inline type imports**: `import { type Foo } from './foo'` (NOT `import type { Foo }`)",
+    "- Prefer **interfaces over types** for object shapes",
+    "- Use **strict type checking** - avoid `any`, use proper types",
+    "- Handle promises properly - always await or handle with `.catch()`",
+    "- Use **consistent naming**:",
+    "  - PascalCase for classes, interfaces, types",
+    "  - camelCase for variables, functions, parameters",
+    "  - UPPER_SNAKE_CASE for constants",
+    "",
+    "## Code Quality",
+    "- Add **JSDoc comments** for all exported functions, classes, and complex logic",
+    "- Use the **logger** (pino) instead of console.log/error",
+    "  - Import: `import { logger } from '../shared/utils/logger.js'`",
+    "  - Usage: `logger.info()`, `logger.error()`, `logger.warn()`",
+    "- Use **dependency injection** pattern where applicable",
+    "- Prefer **nullish coalescing** (`??`) and **optional chaining** (`?.`)",
+    "- Use **async/await** over raw promises",
+    "- Always use **curly braces** for conditionals",
+    "",
+    "## Formatting (Prettier)",
+    "- Single quotes for strings",
+    "- Semicolons required",
+    "- 100 character line width",
+    "- 2 space indentation",
+    "- Arrow function parentheses always",
+    "- Trailing commas in ES5 style",
+    "",
+    "## Import/Export",
+    "- Use ES modules (`.js` extensions in imports)",
+    "- Group imports: external packages first, then internal modules",
+    "- No duplicate imports",
+    "- Use type imports for types only",
+    "",
+    "## Error Handling",
+    "- Use `OAuthError` class for OAuth/OIDC errors",
+    "- Use `asyncHandler` wrapper for async route handlers",
+    "- Validate inputs with Zod schemas",
+    "- Provide descriptive error messages",
+    "",
+    "## Security",
+    "- Never log sensitive data (passwords, tokens, secrets)",
+    "- Validate and sanitize all user inputs",
+    "- Use prepared statements for database queries",
+    "- Follow OAuth 2.0 and OIDC security best practices"
+  ],
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '\n🔧 Running code quality checks after Write...\n' && pnpm format && echo '✅ Format complete\n' && pnpm lint:fix && echo '✅ Lint complete\n' && pnpm typecheck && echo '\n✅ All code quality checks passed!\n'",
+            "timeout": 120
+          }
+        ]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '\n🔧 Running code quality checks after Edit...\n' && pnpm format && echo '✅ Format complete\n' && pnpm lint:fix && echo '✅ Lint complete\n' && pnpm typecheck && echo '\n✅ All code quality checks passed!\n'",
+            "timeout": 120
+          }
+        ]
+      }
+    ]
+  }
+}
