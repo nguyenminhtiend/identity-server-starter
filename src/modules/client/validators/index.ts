@@ -26,39 +26,33 @@ export const grantTypesSchema = z
 // Redirect URIs (array)
 export const redirectUrisSchema = z
   .array(
-    z
-      .string()
-      .url('Each redirect URI must be a valid URL')
-      .refine(
-        (uri) => {
-          const url = new URL(uri);
-          return (
-            url.protocol === 'https:' ||
-            url.hostname === 'localhost' ||
-            url.hostname === '127.0.0.1' ||
-            uri.startsWith('http://localhost') ||
-            uri.startsWith('http://127.0.0.1')
-          );
-        },
-        { message: 'Redirect URIs must use HTTPS (or http://localhost for development)' }
-      )
+    z.url('Each redirect URI must be a valid URL').refine(
+      (uri) => {
+        const url = new URL(uri);
+        return (
+          url.protocol === 'https:' ||
+          url.hostname === 'localhost' ||
+          url.hostname === '127.0.0.1' ||
+          uri.startsWith('http://localhost') ||
+          uri.startsWith('http://127.0.0.1')
+        );
+      },
+      { message: 'Redirect URIs must use HTTPS (or http://localhost for development)' }
+    )
   )
   .min(1, 'At least one redirect URI is required');
 
 // CORS origins (array, for public clients)
 export const corsOriginsSchema = z.optional(
   z.array(
-    z
-      .string()
-      .url('Each CORS origin must be a valid URL')
-      .refine(
-        (origin) => {
-          const url = new URL(origin);
-          // Must be just the origin (no path, query, or fragment)
-          return url.pathname === '/' && !url.search && !url.hash;
-        },
-        { message: 'CORS origins must be just the origin (e.g., https://example.com)' }
-      )
+    z.url('Each CORS origin must be a valid URL').refine(
+      (origin) => {
+        const url = new URL(origin);
+        // Must be just the origin (no path, query, or fragment)
+        return url.pathname === '/' && !url.search && !url.hash;
+      },
+      { message: 'CORS origins must be just the origin (e.g., https://example.com)' }
+    )
   )
 );
 
@@ -77,13 +71,10 @@ export const clientNameSchema = z
   .trim();
 
 // URLs
-export const urlSchema = z.union([
-  z.optional(z.string().url('Must be a valid URL')),
-  z.literal(''),
-]);
+export const urlSchema = z.union([z.optional(z.url('Must be a valid URL')), z.literal('')]);
 
 // Email addresses (for contacts)
-export const emailArraySchema = z.optional(z.array(z.string().email('Invalid email format')));
+export const emailArraySchema = z.optional(z.array(z.email('Invalid email format')));
 
 /**
  * Create Client Request
@@ -93,7 +84,7 @@ export const createClientRequestSchema = z
   .object({
     name: clientNameSchema,
     clientType: clientTypeSchema,
-    organizationId: z.union([z.optional(z.string().uuid()), z.literal('')]),
+    organizationId: z.union([z.optional(z.uuid()), z.literal('')]),
     redirectUris: redirectUrisSchema,
     grantTypes: grantTypesSchema,
     allowedScopes: allowedScopesSchema,
@@ -153,7 +144,7 @@ export type UpdateClientRequest = z.infer<typeof updateClientRequestSchema>;
  * GET /admin/clients
  */
 export const clientListQuerySchema = z.object({
-  organizationId: z.optional(z.string().uuid()),
+  organizationId: z.optional(z.uuid()),
   clientType: z.optional(clientTypeSchema),
   isActive: z.optional(z.string().transform((val) => val === 'true')),
   page: z
@@ -173,7 +164,7 @@ export type ClientListQuery = z.infer<typeof clientListQuerySchema>;
  * GET /admin/clients/:id
  */
 export const clientIdParamSchema = z.object({
-  id: z.string().uuid('Invalid client ID format'),
+  id: z.uuid('Invalid client ID format'),
 });
 
 export type ClientIdParam = z.infer<typeof clientIdParamSchema>;

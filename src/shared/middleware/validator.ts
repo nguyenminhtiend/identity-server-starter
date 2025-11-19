@@ -86,12 +86,12 @@ export const commonSchemas = {
   /**
    * UUID validation
    */
-  uuid: z.string().uuid(),
+  uuid: z.uuid(),
 
   /**
    * Email validation
    */
-  email: z.string().email().toLowerCase(),
+  email: z.email().toLowerCase(),
 
   /**
    * Password validation (2025 standards)
