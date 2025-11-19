@@ -1,6 +1,7 @@
 import { db, users, organizations, clients } from './index.js';
 import { hashPassword, generateRandomToken, sha256Hash as _sha256Hash } from '../utils/crypto.js';
 import { KeyGenerationService } from '../../modules/key-management/services/KeyGenerationService.js';
+import { logger } from '../utils/logger.js';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -8,17 +9,17 @@ dotenv.config();
 const isMultiTenantEnabled = process.env.ENABLE_MULTI_TENANT === 'true';
 
 async function seed() {
-  console.info('🌱 Seeding database...\n');
+  logger.info('🌱 Seeding database...\n');
 
   try {
     // 1. Generate initial signing key
-    console.info('1️⃣  Generating initial signing key...');
+    logger.info('1️⃣  Generating initial signing key...');
     const keyService = new KeyGenerationService();
     await keyService.generateInitialKey();
-    console.info('   ✓ Signing key created\n');
+    logger.info('   ✓ Signing key created\n');
 
     // 2. Create test user
-    console.info('2️⃣  Creating test user...');
+    logger.info('2️⃣  Creating test user...');
     const testPassword = await hashPassword('Test123456!');
     const [testUser] = await db
       .insert(users)
@@ -33,13 +34,13 @@ async function seed() {
       throw new Error('Failed to create test user');
     }
 
-    console.info(`   ✓ Test user created: ${testUser.email}`);
-    console.info(`   Password: Test123456!\n`);
+    logger.info(`   ✓ Test user created: ${testUser.email}`);
+    logger.info(`   Password: Test123456!\n`);
 
     // 3. Create test organization (if multi-tenant enabled)
     let testOrganization = null;
     if (isMultiTenantEnabled) {
-      console.info('3️⃣  Creating test organization...');
+      logger.info('3️⃣  Creating test organization...');
       [testOrganization] = await db
         .insert(organizations)
         .values({
@@ -54,13 +55,13 @@ async function seed() {
         throw new Error('Failed to create test organization');
       }
 
-      console.info(`   ✓ Organization created: ${testOrganization.name}\n`);
+      logger.info(`   ✓ Organization created: ${testOrganization.name}\n`);
     } else {
-      console.info('3️⃣  Multi-tenant disabled, skipping organization creation\n');
+      logger.info('3️⃣  Multi-tenant disabled, skipping organization creation\n');
     }
 
     // 4. Create sample OAuth clients
-    console.info('4️⃣  Creating sample OAuth clients...\n');
+    logger.info('4️⃣  Creating sample OAuth clients...\n');
 
     // 4a. Confidential client (backend web app)
     const confidentialClientId = `client_${generateRandomToken(16)}`;
@@ -90,10 +91,10 @@ async function seed() {
       throw new Error('Failed to create confidential client');
     }
 
-    console.info('   ✓ Confidential Client (Backend Web App):');
-    console.info(`     Client ID: ${confidentialClient.clientId}`);
-    console.info(`     Client Secret: ${confidentialClientSecret}`);
-    console.info(`     Grant Types: authorization_code, refresh_token, client_credentials\n`);
+    logger.info('   ✓ Confidential Client (Backend Web App):');
+    logger.info(`     Client ID: ${confidentialClient.clientId}`);
+    logger.info(`     Client Secret: ${confidentialClientSecret}`);
+    logger.info(`     Grant Types: authorization_code, refresh_token, client_credentials\n`);
 
     // 4b. Public client (SPA with PKCE)
     const publicSpaClientId = `client_${generateRandomToken(16)}`;
@@ -120,11 +121,11 @@ async function seed() {
       throw new Error('Failed to create public SPA client');
     }
 
-    console.info('   ✓ Public Client (SPA):');
-    console.info(`     Client ID: ${publicSpaClient.clientId}`);
-    console.info(`     No client secret (public client, uses PKCE)`);
-    console.info(`     Grant Types: authorization_code, refresh_token`);
-    console.info(`     CORS Origins: http://localhost:5173, http://localhost:3000\n`);
+    logger.info('   ✓ Public Client (SPA):');
+    logger.info(`     Client ID: ${publicSpaClient.clientId}`);
+    logger.info(`     No client secret (public client, uses PKCE)`);
+    logger.info(`     Grant Types: authorization_code, refresh_token`);
+    logger.info(`     CORS Origins: http://localhost:5173, http://localhost:3000\n`);
 
     // 4c. Mobile app client (public with custom redirect URIs)
     const mobileClientId = `client_${generateRandomToken(16)}`;
@@ -151,34 +152,34 @@ async function seed() {
       throw new Error('Failed to create mobile client');
     }
 
-    console.info('   ✓ Public Client (Mobile App):');
-    console.info(`     Client ID: ${mobileClient.clientId}`);
-    console.info(`     No client secret (public client, uses PKCE)`);
-    console.info(`     Grant Types: authorization_code, refresh_token`);
-    console.info(`     Redirect URIs: myapp://callback, com.example.myapp://callback\n`);
+    logger.info('   ✓ Public Client (Mobile App):');
+    logger.info(`     Client ID: ${mobileClient.clientId}`);
+    logger.info(`     No client secret (public client, uses PKCE)`);
+    logger.info(`     Grant Types: authorization_code, refresh_token`);
+    logger.info(`     Redirect URIs: myapp://callback, com.example.myapp://callback\n`);
 
     // Summary
-    console.info('✅ Database seeded successfully!\n');
-    console.info('📝 Summary:');
-    console.info(`   • Test User: ${testUser.email} / Test123456!`);
+    logger.info('✅ Database seeded successfully!\n');
+    logger.info('📝 Summary:');
+    logger.info(`   • Test User: ${testUser.email} / Test123456!`);
     if (testOrganization) {
-      console.info(`   • Organization: ${testOrganization.name} (${testOrganization.slug})`);
+      logger.info(`   • Organization: ${testOrganization.name} (${testOrganization.slug})`);
     }
-    console.info(`   • Clients Created: 3 (1 confidential, 2 public)`);
-    console.info(`   • Signing Key: Generated and stored\n`);
+    logger.info(`   • Clients Created: 3 (1 confidential, 2 public)`);
+    logger.info(`   • Signing Key: Generated and stored\n`);
 
-    console.info('🔐 Client Credentials (save these securely):');
-    console.info('─'.repeat(60));
-    console.info(`Confidential Client:`);
-    console.info(`  Client ID:     ${confidentialClient.clientId}`);
-    console.info(`  Client Secret: ${confidentialClientSecret}`);
-    console.info(`\nPublic SPA Client:`);
-    console.info(`  Client ID:     ${publicSpaClient.clientId}`);
-    console.info(`\nMobile App Client:`);
-    console.info(`  Client ID:     ${mobileClient.clientId}`);
-    console.info('─'.repeat(60));
+    logger.info('🔐 Client Credentials (save these securely):');
+    logger.info('─'.repeat(60));
+    logger.info(`Confidential Client:`);
+    logger.info(`  Client ID:     ${confidentialClient.clientId}`);
+    logger.info(`  Client Secret: ${confidentialClientSecret}`);
+    logger.info(`\nPublic SPA Client:`);
+    logger.info(`  Client ID:     ${publicSpaClient.clientId}`);
+    logger.info(`\nMobile App Client:`);
+    logger.info(`  Client ID:     ${mobileClient.clientId}`);
+    logger.info('─'.repeat(60));
   } catch (error) {
-    console.error('❌ Seeding failed:', error);
+    logger.error({ err: error }, '❌ Seeding failed');
     throw error;
   } finally {
     process.exit(0);
@@ -187,6 +188,6 @@ async function seed() {
 
 // Run seed
 seed().catch((error) => {
-  console.error('Fatal error during seeding:', error);
+  logger.error({ err: error }, 'Fatal error during seeding');
   process.exit(1);
 });

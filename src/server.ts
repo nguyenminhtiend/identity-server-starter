@@ -3,17 +3,26 @@ import session from 'express-session';
 import { createClient } from 'redis';
 import { RedisStore } from 'connect-redis';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { config } from './shared/config';
 import { errorHandler } from './shared/middleware/errorHandler';
 import { helmetConfig, devCorsMiddleware } from './shared/middleware/security';
 import { configureDIContainer } from './shared/di/container.js';
-import oauthRoutes from './modules/oauth/routes';
-import oidcRoutes from './modules/oidc/routes';
+import { logger } from './shared/utils/logger.js';
+
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 async function createServer(): Promise<Application> {
   // Initialize DI container before anything else
   configureDIContainer();
-  console.info('✅ DI Container configured');
+  logger.info('✅ DI Container configured');
+
+  // Import routes AFTER DI container is configured
+  // This ensures services are available when routes initialize
+  const { default: oauthRoutes } = await import('./modules/oauth/routes/index.js');
+  const { default: oidcRoutes } = await import('./modules/oidc/routes/index.js');
 
   const app = express();
 
@@ -35,11 +44,11 @@ async function createServer(): Promise<Application> {
   });
 
   redisClient.on('error', (err) => {
-    console.error('Redis client error:', err);
+    logger.error({ err }, 'Redis client error');
   });
 
   await redisClient.connect();
-  console.info('✅ Connected to Redis');
+  logger.info('✅ Connected to Redis');
 
   // Session store
   const redisStore = new RedisStore({
@@ -100,36 +109,36 @@ async function startServer(): Promise<void> {
     const port = config.port;
 
     app.listen(port, () => {
-      console.info('🚀 Identity Server started');
-      console.info(`📍 Environment: ${config.env}`);
-      console.info(`🌐 Server running on port ${port}`);
-      console.info(`🔗 Issuer URL: ${config.issuer}`);
-      console.info('');
-      console.info('OAuth 2.0 Endpoints:');
-      console.info(`  - Authorization: ${config.issuer}/oauth/authorize`);
-      console.info(`  - Token: ${config.issuer}/oauth/token`);
-      console.info(`  - Revoke: ${config.issuer}/oauth/revoke`);
-      console.info(`  - Introspect: ${config.issuer}/oauth/introspect`);
-      console.info('');
-      console.info('OpenID Connect Endpoints:');
-      console.info(`  - Discovery: ${config.issuer}/.well-known/openid-configuration`);
-      console.info(`  - JWKS: ${config.issuer}/.well-known/jwks.json`);
-      console.info(`  - UserInfo: ${config.issuer}/oauth/userinfo`);
+      logger.info('🚀 Identity Server started');
+      logger.info(`📍 Environment: ${config.env}`);
+      logger.info(`🌐 Server running on port ${port}`);
+      logger.info(`🔗 Issuer URL: ${config.issuer}`);
+      logger.info('');
+      logger.info('OAuth 2.0 Endpoints:');
+      logger.info(`  - Authorization: ${config.issuer}/oauth/authorize`);
+      logger.info(`  - Token: ${config.issuer}/oauth/token`);
+      logger.info(`  - Revoke: ${config.issuer}/oauth/revoke`);
+      logger.info(`  - Introspect: ${config.issuer}/oauth/introspect`);
+      logger.info('');
+      logger.info('OpenID Connect Endpoints:');
+      logger.info(`  - Discovery: ${config.issuer}/.well-known/openid-configuration`);
+      logger.info(`  - JWKS: ${config.issuer}/.well-known/jwks.json`);
+      logger.info(`  - UserInfo: ${config.issuer}/oauth/userinfo`);
     });
   } catch (error) {
-    console.error('❌ Failed to start server:', error);
+    logger.error({ err: error }, '❌ Failed to start server');
     process.exit(1);
   }
 }
 
 // Handle graceful shutdown
 process.on('SIGTERM', () => {
-  console.info('SIGTERM signal received: closing HTTP server');
+  logger.info('SIGTERM signal received: closing HTTP server');
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
-  console.info('SIGINT signal received: closing HTTP server');
+  logger.info('SIGINT signal received: closing HTTP server');
   process.exit(0);
 });
 

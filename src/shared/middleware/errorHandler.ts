@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import type { ZodValidationError, ErrorWithStatus } from '../types/oauth';
+import { logger } from '../utils/logger.js';
 
 /**
  * Custom error class for OAuth 2.0 errors
@@ -49,13 +50,17 @@ export const OAuthErrors = {
  */
 export function errorHandler(err: Error, req: Request, res: Response, _next: NextFunction): void {
   // Log error for debugging
-  console.error('[Error Handler]', {
-    name: err.name,
-    message: err.message,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
-    path: req.path,
-    method: req.method,
-  });
+  logger.error(
+    {
+      err,
+      name: err.name,
+      message: err.message,
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+      path: req.path,
+      method: req.method,
+    },
+    '[Error Handler]'
+  );
 
   // Handle OAuth errors
   if (err instanceof OAuthError) {

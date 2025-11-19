@@ -43,9 +43,7 @@ export class DIContainer {
    * Get the singleton container instance
    */
   static getInstance(): DIContainer {
-    if (DIContainer.instance === undefined) {
-      DIContainer.instance = new DIContainer();
-    }
+    DIContainer.instance ??= new DIContainer();
     return DIContainer.instance;
   }
 

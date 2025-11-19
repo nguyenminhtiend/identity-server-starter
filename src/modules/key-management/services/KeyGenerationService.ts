@@ -1,5 +1,6 @@
 import { db, signingKeys } from '../../../shared/database/index.js';
 import { generateRSAKeyPair, encryptAES } from '../../../shared/utils/crypto.js';
+import { logger } from '../../../shared/utils/logger.js';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -73,9 +74,12 @@ export class KeyGenerationService {
       nextRotationAt,
     });
 
-    console.info(`✓ Generated and stored new signing key: ${keyId}`);
-    console.info(`  - Primary: ${isPrimary}`);
-    console.info(`  - Next rotation: ${nextRotationAt.toISOString()}`);
+    logger.info(
+      { keyId, isPrimary, nextRotationAt: nextRotationAt.toISOString() },
+      `✓ Generated and stored new signing key: ${keyId}`
+    );
+    logger.info(`  - Primary: ${isPrimary}`);
+    logger.info(`  - Next rotation: ${nextRotationAt.toISOString()}`);
 
     return keyId;
   }
@@ -84,7 +88,7 @@ export class KeyGenerationService {
    * Generate the initial signing key for the system
    */
   async generateInitialKey(): Promise<string> {
-    console.info('Generating initial signing key...');
+    logger.info('Generating initial signing key...');
     return this.generateAndStoreKey(true);
   }
 }
@@ -95,12 +99,12 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   service
     .generateInitialKey()
     .then((keyId) => {
-      console.info(`\n✓ Initial signing key generated successfully!`);
-      console.info(`Key ID: ${keyId}`);
+      logger.info(`\n✓ Initial signing key generated successfully!`);
+      logger.info({ keyId }, `Key ID: ${keyId}`);
       process.exit(0);
     })
     .catch((error) => {
-      console.error('✗ Failed to generate signing key:', error);
+      logger.error({ err: error }, '✗ Failed to generate signing key');
       process.exit(1);
     });
 }

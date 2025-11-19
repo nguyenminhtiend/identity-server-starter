@@ -3,6 +3,7 @@ import { eq, and, desc } from 'drizzle-orm';
 import type * as jose from 'jose';
 import { db, signingKeys } from '../../../shared/database/index.js';
 import { encryptAES, decryptAES, generateRSAKeyPair } from '../../../shared/utils/crypto.js';
+import { logger } from '../../../shared/utils/logger.js';
 
 /**
  * Signing Key interface (from database)
@@ -125,7 +126,7 @@ export class KeyManagementService {
           this.primaryKeyId = key.keyId;
         }
       } catch (error) {
-        console.error(`Failed to decrypt key ${key.keyId}:`, error);
+        logger.error({ err: error, keyId: key.keyId }, `Failed to decrypt key ${key.keyId}`);
       }
     }
 
@@ -185,7 +186,7 @@ export class KeyManagementService {
           e: jwk.e ?? 'AQAB',
         });
       } catch (error) {
-        console.error(`Failed to export public key ${keyId}:`, error);
+        logger.error({ err: error, keyId }, `Failed to export public key ${keyId}`);
       }
     }
 
@@ -293,7 +294,7 @@ export class KeyManagementService {
    * @returns The new primary key
    */
   async rotateKeys(): Promise<SigningKey> {
-    console.info('Starting key rotation...');
+    logger.info('Starting key rotation...');
 
     // Get current primary key
     const [currentPrimary] = await db
@@ -315,13 +316,16 @@ export class KeyManagementService {
         })
         .where(eq(signingKeys.id, currentPrimary.id));
 
-      console.info(`Rotated key ${currentPrimary.keyId} -> ${newPrimaryKey.keyId}`);
+      logger.info(
+        { oldKeyId: currentPrimary.keyId, newKeyId: newPrimaryKey.keyId },
+        `Rotated key ${currentPrimary.keyId} -> ${newPrimaryKey.keyId}`
+      );
     }
 
     // Invalidate cache
     this.lastRefresh = new Date(0);
 
-    console.info('Key rotation completed');
+    logger.info('Key rotation completed');
     return newPrimaryKey;
   }
 
@@ -341,7 +345,7 @@ export class KeyManagementService {
 
     const now = new Date();
     if (now >= primaryKey.nextRotationAt) {
-      console.info('Automatic key rotation triggered');
+      logger.info('Automatic key rotation triggered');
       await this.rotateKeys();
     }
   }
@@ -356,7 +360,7 @@ export class KeyManagementService {
     // Invalidate cache
     this.lastRefresh = new Date(0);
 
-    console.info(`Key ${keyId} deactivated`);
+    logger.info({ keyId }, `Key ${keyId} deactivated`);
   }
 
   /**
