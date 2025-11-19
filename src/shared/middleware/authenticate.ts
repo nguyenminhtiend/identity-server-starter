@@ -37,7 +37,7 @@ export function requireSession(req: Request, res: Response, next: NextFunction):
   // Attach user info from session to request
   authReq.user = {
     id: req.session.userId,
-    email: req.session.userEmail,
+    email: req.session.userEmail ?? '',
     email_verified: req.session.emailVerified ?? false,
   };
 
@@ -54,7 +54,7 @@ export function optionalSession(req: Request, res: Response, next: NextFunction)
   if (req.session?.userId) {
     authReq.user = {
       id: req.session.userId,
-      email: req.session.userEmail,
+      email: req.session.userEmail ?? '',
       email_verified: req.session.emailVerified ?? false,
     };
   }
@@ -67,7 +67,7 @@ export function optionalSession(req: Request, res: Response, next: NextFunction)
  * Verifies access token from Authorization header
  * Used for API routes (userinfo, introspection, etc.)
  */
-export function requireBearerToken(req: Request, _res: Response, _next: NextFunction): void {
+export function requireBearerToken(req: Request, res: Response, next: NextFunction): void {
   const _authReq = req as AuthenticatedRequest;
   const authHeader = req.headers.authorization;
 
@@ -109,7 +109,7 @@ export function requireBearerToken(req: Request, _res: Response, _next: NextFunc
  * Verifies client credentials from Authorization header or request body
  * Used for token endpoint and other client-authenticated endpoints
  */
-export function requireClientAuth(req: Request, _res: Response, _next: NextFunction): void {
+export function requireClientAuth(req: Request, res: Response, next: NextFunction): void {
   const _authReq = req as AuthenticatedRequest;
 
   let clientId: string | undefined;
@@ -168,7 +168,7 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction): v
 
   authReq.user = {
     id: req.session.userId,
-    email: req.session.userEmail,
+    email: req.session.userEmail ?? '',
     email_verified: req.session.emailVerified ?? false,
   };
 
@@ -185,9 +185,9 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction): v
  */
 declare module 'express-session' {
   interface SessionData {
-    userId: string;
-    userEmail: string;
-    emailVerified: boolean;
+    userId?: string;
+    userEmail?: string;
+    emailVerified?: boolean;
     returnTo?: string;
 
     // OAuth flow state

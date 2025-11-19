@@ -4,7 +4,7 @@ import * as schema from './schema.js';
 
 // Get DATABASE_URL from environment
 const connectionString =
-  process.env.DATABASE_URL || 'postgresql://admin:123456@127.0.0.1:5432/identity_db';
+  process.env.DATABASE_URL ?? 'postgresql://admin:123456@127.0.0.1:5432/identity_db';
 
 // Create postgres client
 const client = postgres(connectionString, {

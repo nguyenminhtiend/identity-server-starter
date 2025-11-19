@@ -118,7 +118,7 @@ export class OIDCService {
       email: ['email', 'email_verified'],
     };
 
-    return scopeClaimsMap[scope] || [];
+    return scopeClaimsMap[scope] ?? [];
   }
 
   /**

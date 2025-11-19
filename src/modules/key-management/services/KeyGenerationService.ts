@@ -12,8 +12,8 @@ export class KeyGenerationService {
   private readonly keyRotationDays: number;
 
   constructor() {
-    this.encryptionSecret = process.env.KEY_ENCRYPTION_SECRET || '';
-    this.keyRotationDays = parseInt(process.env.KEY_ROTATION_DAYS || '90', 10);
+    this.encryptionSecret = process.env.KEY_ENCRYPTION_SECRET ?? '';
+    this.keyRotationDays = parseInt(process.env.KEY_ROTATION_DAYS ?? '90', 10);
 
     if (!this.encryptionSecret || this.encryptionSecret.length < 32) {
       throw new Error('KEY_ENCRYPTION_SECRET must be at least 32 characters long');
@@ -73,9 +73,9 @@ export class KeyGenerationService {
       nextRotationAt,
     });
 
-    console.log(`✓ Generated and stored new signing key: ${keyId}`);
-    console.log(`  - Primary: ${isPrimary}`);
-    console.log(`  - Next rotation: ${nextRotationAt.toISOString()}`);
+    console.info(`✓ Generated and stored new signing key: ${keyId}`);
+    console.info(`  - Primary: ${isPrimary}`);
+    console.info(`  - Next rotation: ${nextRotationAt.toISOString()}`);
 
     return keyId;
   }
@@ -84,7 +84,7 @@ export class KeyGenerationService {
    * Generate the initial signing key for the system
    */
   async generateInitialKey(): Promise<string> {
-    console.log('Generating initial signing key...');
+    console.info('Generating initial signing key...');
     return this.generateAndStoreKey(true);
   }
 }
@@ -95,8 +95,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   service
     .generateInitialKey()
     .then((keyId) => {
-      console.log(`\n✓ Initial signing key generated successfully!`);
-      console.log(`Key ID: ${keyId}`);
+      console.info(`\n✓ Initial signing key generated successfully!`);
+      console.info(`Key ID: ${keyId}`);
       process.exit(0);
     })
     .catch((error) => {

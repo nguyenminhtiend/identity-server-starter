@@ -95,7 +95,7 @@ export class OAuthService {
       .where(and(eq(clients.clientId, clientId), eq(clients.isActive, true)))
       .limit(1);
 
-    return client || null;
+    return client ?? null;
   }
 
   /**
@@ -299,7 +299,7 @@ export class OAuthService {
     );
 
     if (!pkceResult.valid) {
-      throw new Error(pkceResult.error || 'PKCE verification failed');
+      throw new Error(pkceResult.error ?? 'PKCE verification failed');
     }
 
     // Mark code as used

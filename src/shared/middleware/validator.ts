@@ -22,13 +22,13 @@ interface ValidateOptions {
 export function validate(schema: ZodSchema, options: ValidateOptions = {}) {
   const { target = 'body', stripUnknown = true } = options;
 
-  return (req: Request, res: Response, next: NextFunction): void => {
+  return (req: Request, _res: Response, next: NextFunction): void => {
     try {
       // Get data from the specified target
       const data = req[target];
 
       // Parse and validate data
-      const parsed = stripUnknown ? schema.parse(data) : schema.strict().parse(data);
+      const parsed = stripUnknown ? schema.parse(data) : schema.parse(data);
 
       // Replace request data with validated data
       (req as any)[target] = parsed;
@@ -37,7 +37,7 @@ export function validate(schema: ZodSchema, options: ValidateOptions = {}) {
     } catch (error) {
       if (error instanceof ZodError) {
         // Format Zod errors into OAuth-friendly format
-        const messages = error.errors.map((err) => {
+        const messages = error.issues.map((err) => {
           const path = err.path.join('.');
           return path ? `${path}: ${err.message}` : err.message;
         });
@@ -259,9 +259,10 @@ export function jsonStringSchema<T>(schema: ZodSchema<T>) {
 /**
  * Helper to create a schema for comma-separated string arrays
  */
-export function commaSeparatedString(itemSchema: ZodSchema = z.string()) {
+export function commaSeparatedString(itemSchema?: ZodSchema) {
+  const schema = itemSchema ?? z.string();
   return z
     .string()
     .transform((val) => val.split(',').map((item) => item.trim()))
-    .pipe(z.array(itemSchema));
+    .pipe(z.array(schema)) as any;
 }

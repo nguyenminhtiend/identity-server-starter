@@ -52,17 +52,19 @@ export class TokenController {
         case 'client_credentials':
           return await this.handleClientCredentialsGrant(req, res);
         default:
-          return res.status(400).json({
+          res.status(400).json({
             error: 'unsupported_grant_type',
             error_description: `Grant type '${grant_type}' is not supported`,
           });
+          return;
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({
+        res.status(400).json({
           error: 'invalid_request',
-          error_description: error.errors.map((e) => e.message).join(', '),
+          error_description: error.issues.map((e) => e.message).join(', '),
         });
+        return;
       }
       next(error);
     }
@@ -75,126 +77,56 @@ export class TokenController {
     const params = authorizationCodeGrantSchema.parse(req.body);
 
     // Validate client
-    const client = await this.oauthService.validateClient(params.client_id);
-    if (!client) {
-      return res.status(400).json({
+    const client = await this.oauthService.getClient(params.client_id);
+    if (client === null) {
+      res.status(400).json({
         error: 'invalid_client',
         error_description: 'Client not found',
       });
+      return;
     }
 
     // Authenticate confidential clients
-    if (client.client_type === 'confidential') {
+    if (this.oauthService.isConfidentialClient(client)) {
       if (!params.client_secret) {
-        return res.status(400).json({
+        res.status(400).json({
           error: 'invalid_client',
           error_description: 'Client secret is required for confidential clients',
         });
+        return;
       }
 
-      const isValidSecret = await this.oauthService.validateClientSecret(
-        client.id,
+      const isValidSecret = await this.oauthService.validateClientCredentials(
+        params.client_id,
         params.client_secret
       );
 
-      if (!isValidSecret) {
-        return res.status(401).json({
+      if (isValidSecret === false) {
+        res.status(401).json({
           error: 'invalid_client',
           error_description: 'Invalid client credentials',
         });
+        return;
       }
     }
 
-    // Retrieve and validate authorization code
-    const authCode = await this.oauthService.getAuthorizationCode(params.code);
-    if (!authCode) {
-      return res.status(400).json({
+    // Exchange authorization code for tokens
+    const tokenResponse = await this.oauthService.exchangeAuthorizationCode(
+      params.code,
+      params.client_id,
+      params.redirect_uri,
+      params.code_verifier
+    );
+
+    if (tokenResponse === null) {
+      res.status(400).json({
         error: 'invalid_grant',
         error_description: 'Invalid or expired authorization code',
       });
+      return;
     }
 
-    // Check if code has already been used
-    if (authCode.used_at) {
-      return res.status(400).json({
-        error: 'invalid_grant',
-        error_description: 'Authorization code has already been used',
-      });
-    }
-
-    // Check if code has expired
-    if (new Date() > new Date(authCode.expires_at)) {
-      return res.status(400).json({
-        error: 'invalid_grant',
-        error_description: 'Authorization code has expired',
-      });
-    }
-
-    // Verify client matches
-    if (authCode.client_id !== client.id) {
-      return res.status(400).json({
-        error: 'invalid_grant',
-        error_description: 'Authorization code was issued to a different client',
-      });
-    }
-
-    // Verify redirect_uri matches
-    if (authCode.redirect_uri !== params.redirect_uri) {
-      return res.status(400).json({
-        error: 'invalid_grant',
-        error_description: 'Redirect URI does not match',
-      });
-    }
-
-    // Verify PKCE code_verifier
-    const isValidVerifier = this.pkceService.verifyChallenge(
-      params.code_verifier,
-      authCode.code_challenge,
-      authCode.code_challenge_method as 'S256'
-    );
-
-    if (!isValidVerifier) {
-      return res.status(400).json({
-        error: 'invalid_grant',
-        error_description: 'Invalid PKCE code_verifier',
-      });
-    }
-
-    // Mark code as used
-    await this.oauthService.markAuthorizationCodeAsUsed(authCode.id);
-
-    // Generate access token
-    const accessToken = await this.tokenService.generateAccessToken({
-      userId: authCode.user_id,
-      clientId: client.id,
-      scope: authCode.scope,
-    });
-
-    // Generate refresh token
-    const refreshToken = await this.oauthService.generateRefreshToken({
-      userId: authCode.user_id,
-      clientId: client.id,
-      scope: authCode.scope,
-    });
-
-    // Generate ID token if openid scope is requested
-    let idToken: string | undefined;
-    if (authCode.scope.includes('openid')) {
-      idToken = await this.tokenService.generateIdToken({
-        userId: authCode.user_id,
-        clientId: client.id,
-        scope: authCode.scope,
-      });
-    }
-
-    res.json({
-      access_token: accessToken,
-      token_type: 'Bearer',
-      expires_in: 900, // 15 minutes
-      refresh_token: refreshToken,
-      ...(idToken && { id_token: idToken }),
-      scope: authCode.scope,
-    });
+    res.json(tokenResponse);
   }
 
   /**
@@ -204,85 +136,54 @@ export class TokenController {
     const params = refreshTokenGrantSchema.parse(req.body);
 
     // Validate client
-    const client = await this.oauthService.validateClient(params.client_id);
-    if (!client) {
-      return res.status(400).json({
+    const client = await this.oauthService.getClient(params.client_id);
+    if (client === null) {
+      res.status(400).json({
         error: 'invalid_client',
         error_description: 'Client not found',
       });
+      return;
     }
 
     // Authenticate confidential clients
-    if (client.client_type === 'confidential') {
+    if (this.oauthService.isConfidentialClient(client)) {
       if (!params.client_secret) {
-        return res.status(400).json({
+        res.status(400).json({
           error: 'invalid_client',
           error_description: 'Client secret is required for confidential clients',
         });
+        return;
       }
 
-      const isValidSecret = await this.oauthService.validateClientSecret(
-        client.id,
+      const isValidSecret = await this.oauthService.validateClientCredentials(
+        params.client_id,
         params.client_secret
       );
 
-      if (!isValidSecret) {
-        return res.status(401).json({
+      if (isValidSecret === false) {
+        res.status(401).json({
           error: 'invalid_client',
           error_description: 'Invalid client credentials',
         });
+        return;
       }
     }
 
-    // Validate and rotate refresh token
-    const tokenData = await this.oauthService.validateAndRotateRefreshToken(
+    // Rotate refresh token and get new tokens
+    const tokenResponse = await this.oauthService.rotateRefreshToken(
       params.refresh_token,
-      client.id
+      params.client_id
     );
 
-    if (!tokenData) {
-      return res.status(400).json({
+    if (tokenResponse === null) {
+      res.status(400).json({
         error: 'invalid_grant',
         error_description: 'Invalid or expired refresh token',
       });
+      return;
     }
 
-    // Use requested scope or fall back to original scope
-    const scope = params.scope || tokenData.scope;
-
-    // Validate that requested scope is not broader than original
-    if (params.scope && !this.oauthService.isScopeSubset(params.scope, tokenData.scope)) {
-      return res.status(400).json({
-        error: 'invalid_scope',
-        error_description: 'Requested scope is broader than original scope',
-      });
-    }
-
-    // Generate new access token
-    const accessToken = await this.tokenService.generateAccessToken({
-      userId: tokenData.userId,
-      clientId: client.id,
-      scope,
-    });
-
-    // Generate ID token if openid scope is present
-    let idToken: string | undefined;
-    if (scope.includes('openid')) {
-      idToken = await this.tokenService.generateIdToken({
-        userId: tokenData.userId,
-        clientId: client.id,
-        scope,
-      });
-    }
-
-    res.json({
-      access_token: accessToken,
-      token_type: 'Bearer',
-      expires_in: 900, // 15 minutes
-      refresh_token: tokenData.newRefreshToken,
-      ...(idToken && { id_token: idToken }),
-      scope,
-    });
+    res.json(tokenResponse);
   }
 
   /**
@@ -292,20 +193,22 @@ export class TokenController {
     const params = clientCredentialsGrantSchema.parse(req.body);
 
     // Validate client
-    const client = await this.oauthService.validateClient(params.client_id);
-    if (!client) {
-      return res.status(400).json({
+    const client = await this.oauthService.getClient(params.client_id);
+    if (client === null) {
+      res.status(400).json({
         error: 'invalid_client',
         error_description: 'Client not found',
       });
+      return;
     }
 
     // Only confidential clients can use client_credentials grant
-    if (client.client_type !== 'confidential') {
-      return res.status(400).json({
+    if (!this.oauthService.isConfidentialClient(client)) {
+      res.status(400).json({
         error: 'unauthorized_client',
         error_description: 'Client is not authorized to use this grant type',
       });
+      return;
     }
 
     // Validate client credentials
@@ -315,13 +218,14 @@ export class TokenController {
     );
 
     if (!isValidSecret) {
-      return res.status(401).json({
+      res.status(401).json({
         error: 'invalid_client',
         error_description: 'Invalid client credentials',
       });
+      return;
     }
 
-    const scope = params.scope || client.allowed_scopes;
+    const scope = params.scope ?? client.allowedScopes;
 
     // Generate access token (no user context)
     const accessToken = await this.tokenService.generateAccessToken({

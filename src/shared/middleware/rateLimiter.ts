@@ -10,7 +10,10 @@ function getClientIp(req: Request): string {
   // Check for common proxy headers
   const forwarded = req.headers['x-forwarded-for'];
   if (typeof forwarded === 'string') {
-    return forwarded.split(',')[0].trim();
+    const firstIp = forwarded.split(',')[0];
+    if (firstIp) {
+      return firstIp.trim();
+    }
   }
 
   const realIp = req.headers['x-real-ip'];
@@ -19,13 +22,13 @@ function getClientIp(req: Request): string {
   }
 
   // Fall back to socket address
-  return req.socket.remoteAddress || 'unknown';
+  return req.socket?.remoteAddress || 'unknown';
 }
 
 /**
  * Custom handler for rate limit exceeded
  */
-function rateLimitHandler(req: Request, res: Response): void {
+function rateLimitHandler(_req: Request, res: Response): void {
   res.status(429).json({
     error: 'too_many_requests',
     error_description: 'Too many requests, please try again later',

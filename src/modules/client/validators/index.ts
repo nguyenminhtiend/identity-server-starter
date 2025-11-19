@@ -7,7 +7,7 @@ import { z } from 'zod';
 
 // Client types
 export const clientTypeSchema = z.enum(['confidential', 'public'], {
-  errorMap: () => ({ message: 'Client type must be either "confidential" or "public"' }),
+  message: 'Client type must be either "confidential" or "public"',
 });
 
 // Grant types
@@ -161,13 +161,13 @@ export const clientListQuerySchema = z.object({
     .transform((val) => parseInt(val, 10))
     .pipe(z.number().int().positive())
     .optional()
-    .default('1'),
+    .default(1),
   limit: z
     .string()
     .transform((val) => parseInt(val, 10))
     .pipe(z.number().int().positive().max(100))
     .optional()
-    .default('20'),
+    .default(20),
 });
 
 export type ClientListQuery = z.infer<typeof clientListQuerySchema>;

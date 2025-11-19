@@ -263,7 +263,7 @@ export class TokenService {
       return null;
     }
 
-    return result.payload.sub || null;
+    return result.payload.sub ?? null;
   }
 
   /**
@@ -277,7 +277,7 @@ export class TokenService {
       return null;
     }
 
-    return (result.payload as any).client_id || null;
+    return (result.payload as any).client_id ?? null;
   }
 
   /**
@@ -291,7 +291,7 @@ export class TokenService {
       return [];
     }
 
-    const scope = (result.payload as any).scope || '';
+    const scope = (result.payload as any).scope ?? '';
     return scope.split(' ').filter((s: string) => s.length > 0);
   }
 

@@ -54,7 +54,7 @@ export class UserInfoController {
       if (!verificationResult.valid) {
         res.status(401).json({
           error: 'invalid_token',
-          error_description: verificationResult.error || 'Token verification failed',
+          error_description: verificationResult.error ?? 'Token verification failed',
         });
         return;
       }
@@ -63,7 +63,7 @@ export class UserInfoController {
 
       // Extract user ID and scopes from token
       const userId = payload.sub;
-      const scope = payload.scope || '';
+      const scope = payload.scope ?? '';
       const scopes = scope.split(' ');
 
       // Check if openid scope is present (required for UserInfo endpoint)

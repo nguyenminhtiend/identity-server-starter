@@ -25,7 +25,7 @@ export interface ValidationErrorResponse {
 export function formatValidationError(error: ZodError): ValidationErrorResponse {
   return {
     error: 'Validation failed',
-    errors: error.errors.map((err) => {
+    errors: error.issues.map((err) => {
       const field = err.path.join('.');
       const message = err.message;
       return {
@@ -42,13 +42,14 @@ export function formatValidationError(error: ZodError): ValidationErrorResponse 
  * @returns Express middleware
  */
 export function validateBody<T extends z.ZodType>(schema: T) {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       req.body = await schema.parseAsync(req.body);
       next();
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json(formatValidationError(error));
+        res.status(400).json(formatValidationError(error));
+        return;
       }
       next(error);
     }
@@ -61,13 +62,14 @@ export function validateBody<T extends z.ZodType>(schema: T) {
  * @returns Express middleware
  */
 export function validateQuery<T extends z.ZodType>(schema: T) {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      req.query = await schema.parseAsync(req.query);
+      req.query = await schema.parseAsync(req.query) as any;
       next();
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json(formatValidationError(error));
+        res.status(400).json(formatValidationError(error));
+        return;
       }
       next(error);
     }
@@ -80,13 +82,14 @@ export function validateQuery<T extends z.ZodType>(schema: T) {
  * @returns Express middleware
  */
 export function validateParams<T extends z.ZodType>(schema: T) {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      req.params = await schema.parseAsync(req.params);
+      req.params = await schema.parseAsync(req.params) as any;
       next();
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json(formatValidationError(error));
+        res.status(400).json(formatValidationError(error));
+        return;
       }
       next(error);
     }

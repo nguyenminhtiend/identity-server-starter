@@ -6,7 +6,7 @@ dotenv.config();
 const configSchema = z.object({
   // Application
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  PORT: z.string().transform(Number).pipe(z.number().min(1).max(65535)).default('3000'),
+  PORT: z.string().transform(Number).pipe(z.number().min(1).max(65535)).default(() => 3000),
 
   // Database
   DATABASE_URL: z.string().url(),
@@ -20,11 +20,11 @@ const configSchema = z.object({
 
   // Token Configuration
   ISSUER_URL: z.string().url(),
-  ACCESS_TOKEN_TTL: z.string().transform(Number).pipe(z.number().positive()).default('900'),
-  REFRESH_TOKEN_TTL: z.string().transform(Number).pipe(z.number().positive()).default('2592000'),
+  ACCESS_TOKEN_TTL: z.string().transform(Number).pipe(z.number().positive()).default(() => 900),
+  REFRESH_TOKEN_TTL: z.string().transform(Number).pipe(z.number().positive()).default(() => 2592000),
 
   // Key Management
-  KEY_ROTATION_DAYS: z.string().transform(Number).pipe(z.number().positive()).default('90'),
+  KEY_ROTATION_DAYS: z.string().transform(Number).pipe(z.number().positive()).default(() => 90),
   KMS_PROVIDER: z.enum(['local', 'aws', 'azure', 'gcp']).default('local'),
   AWS_KMS_KEY_ID: z.string().optional(),
   AZURE_KEY_VAULT_URL: z.string().url().optional().or(z.literal('')),
@@ -35,17 +35,17 @@ const configSchema = z.object({
     .string()
     .transform((val) => val.toLowerCase() === 'true')
     .pipe(z.boolean())
-    .default('false'),
+    .default(() => false),
 
   // CORS
   ALLOWED_ORIGINS: z
     .string()
     .transform((val) => val.split(',').map((origin) => origin.trim()))
-    .default('http://localhost:3000'),
+    .default(() => ['http://localhost:3000']),
 
   // Rate Limiting
-  RATE_LIMIT_WINDOW_MS: z.string().transform(Number).pipe(z.number().positive()).default('60000'),
-  RATE_LIMIT_MAX_REQUESTS: z.string().transform(Number).pipe(z.number().positive()).default('100'),
+  RATE_LIMIT_WINDOW_MS: z.string().transform(Number).pipe(z.number().positive()).default(() => 60000),
+  RATE_LIMIT_MAX_REQUESTS: z.string().transform(Number).pipe(z.number().positive()).default(() => 100),
 });
 
 export type Config = z.infer<typeof configSchema>;
@@ -56,7 +56,7 @@ function validateConfig(): Config {
   } catch (error) {
     if (error instanceof z.ZodError) {
       console.error('Configuration validation failed:');
-      error.errors.forEach((err) => {
+      error.issues.forEach((err) => {
         console.error(`  - ${err.path.join('.')}: ${err.message}`);
       });
       process.exit(1);

@@ -1,7 +1,6 @@
 import { type Request, type Response, type NextFunction } from 'express';
 import { z } from 'zod';
 import { type OAuthService } from '../services/OAuthService';
-import { type PKCEService } from '../services/PKCEService';
 
 const authorizeSchema = z.object({
   client_id: z.string().min(1),
@@ -14,10 +13,7 @@ const authorizeSchema = z.object({
 });
 
 export class AuthorizeController {
-  constructor(
-    private oauthService: OAuthService,
-    private pkceService: PKCEService
-  ) {}
+  constructor(private oauthService: OAuthService) {}
 
   /**
    * GET /oauth/authorize
@@ -29,40 +25,47 @@ export class AuthorizeController {
       const params = authorizeSchema.parse(req.query);
 
       // Validate client exists and redirect_uri is allowed
-      const client = await this.oauthService.validateClient(params.client_id);
-      if (!client) {
-        return res.status(400).json({
+      const client = await this.oauthService.getClient(params.client_id);
+      if (client === null) {
+        res.status(400).json({
           error: 'invalid_client',
           error_description: 'Client not found',
         });
+        return;
+        return;
       }
 
-      if (!client.is_active) {
-        return res.status(400).json({
+      if (!client.isActive) {
+        res.status(400).json({
           error: 'invalid_client',
           error_description: 'Client is not active',
         });
+        return;
+        return;
       }
 
       // Validate redirect URI
       const isValidRedirect = this.oauthService.validateRedirectUri(client, params.redirect_uri);
 
       if (!isValidRedirect) {
-        return res.status(400).json({
+        res.status(400).json({
           error: 'invalid_request',
           error_description: 'Invalid redirect_uri',
         });
+        return;
+        return;
       }
 
       // Validate PKCE parameters
       if (params.code_challenge_method !== 'S256') {
-        return this.redirectWithError(
+        this.redirectWithError(
           res,
           params.redirect_uri,
           'invalid_request',
           'Only S256 code_challenge_method is supported',
           params.state
         );
+        return;
       }
 
       // Check if user is authenticated
@@ -83,9 +86,9 @@ export class AuthorizeController {
       const userId = req.session.userId;
 
       // Check if user has previously granted consent
-      const hasConsent = await this.oauthService.checkConsent(userId, client.id, params.scope);
+      const hasConsent = await this.oauthService.hasConsent(userId, client.id, params.scope);
 
-      if (!hasConsent) {
+      if (hasConsent === false) {
         // Show consent screen
         return res.render('oauth/consent', {
           client,
@@ -96,14 +99,14 @@ export class AuthorizeController {
       }
 
       // Generate authorization code
-      const code = await this.oauthService.createAuthorizationCode({
-        clientId: client.id,
+      const code = await this.oauthService.createAuthorizationCode(
+        client.id,
         userId,
-        redirectUri: params.redirect_uri,
-        scope: params.scope,
-        codeChallenge: params.code_challenge,
-        codeChallengeMethod: params.code_challenge_method,
-      });
+        params.redirect_uri,
+        params.scope,
+        params.code_challenge,
+        params.code_challenge_method
+      );
 
       // Redirect back to client with code
       const redirectUrl = new URL(params.redirect_uri);
@@ -115,10 +118,12 @@ export class AuthorizeController {
       res.redirect(redirectUrl.toString());
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({
+        res.status(400).json({
           error: 'invalid_request',
-          error_description: error.errors.map((e) => e.message).join(', '),
+          error_description: error.issues.map((e) => e.message).join(', '),
         });
+        return;
+        return;
       }
       next(error);
     }
@@ -141,46 +146,51 @@ export class AuthorizeController {
       } = req.body;
 
       if (!req.session?.userId) {
-        return res.status(401).json({
+        res.status(401).json({
           error: 'unauthorized',
           error_description: 'User not authenticated',
         });
+        return;
+        return;
       }
 
       const userId = req.session.userId;
 
       // User denied consent
       if (allow !== 'true' && allow !== true) {
-        return this.redirectWithError(
+        this.redirectWithError(
           res,
           redirect_uri,
           'access_denied',
           'User denied the request',
           state
         );
+        return;
       }
 
       // Validate client
-      const client = await this.oauthService.validateClient(client_id);
-      if (!client) {
-        return res.status(400).json({
+      const client = await this.oauthService.getClient(client_id);
+      if (client === null) {
+        res.status(400).json({
           error: 'invalid_client',
           error_description: 'Client not found',
         });
+        return;
+        return;
       }
 
       // Save consent
       await this.oauthService.grantConsent(userId, client.id, scope);
 
       // Generate authorization code
-      const code = await this.oauthService.createAuthorizationCode({
-        clientId: client.id,
+      const code = await this.oauthService.createAuthorizationCode(
+        client.id,
         userId,
-        redirectUri: redirect_uri,
+        redirect_uri,
         scope,
-        codeChallenge: code_challenge,
-        codeChallengeMethod: code_challenge_method,
-      });
+        code_challenge,
+        code_challenge_method
+      );
 
       // Redirect back to client with code
       const redirectUrl = new URL(redirect_uri);

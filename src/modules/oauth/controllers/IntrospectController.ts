@@ -26,70 +26,77 @@ export class IntrospectController {
       const params = introspectSchema.parse(req.body);
 
       // Validate client
-      const client = await this.oauthService.validateClient(params.client_id);
-      if (!client) {
-        return res.status(400).json({
+      const client = await this.oauthService.getClient(params.client_id);
+      if (client === null) {
+        res.status(400).json({
           error: 'invalid_client',
           error_description: 'Client not found',
         });
+        return;
       }
 
       // Authenticate confidential clients (introspection requires authentication)
-      if (client.client_type === 'confidential') {
+      if (this.oauthService.isConfidentialClient(client)) {
         if (!params.client_secret) {
-          return res.status(400).json({
+          res.status(400).json({
             error: 'invalid_client',
             error_description: 'Client secret is required for confidential clients',
           });
+          return;
         }
 
-        const isValidSecret = await this.oauthService.validateClientSecret(
-          client.id,
+        const isValidSecret = await this.oauthService.validateClientCredentials(
+          params.client_id,
           params.client_secret
         );
 
-        if (!isValidSecret) {
-          return res.status(401).json({
+        if (isValidSecret === false) {
+          res.status(401).json({
             error: 'invalid_client',
             error_description: 'Invalid client credentials',
           });
+          return;
         }
       } else {
         // Public clients must provide client_secret for introspection
-        return res.status(400).json({
+        res.status(400).json({
           error: 'invalid_client',
           error_description: 'Token introspection requires client authentication',
         });
+        return;
       }
 
       // Determine token type and validate
-      let tokenMetadata: any;
+      let tokenMetadata: Record<string, unknown> | null;
       const hint = params.token_type_hint;
 
-      if (hint === 'refresh_token' || !hint) {
+      if (hint === 'refresh_token' || hint === undefined) {
         // Try as refresh token first
         tokenMetadata = await this.introspectRefreshToken(params.token, client.id);
-        if (tokenMetadata) {
-          return res.json(tokenMetadata);
+        if (tokenMetadata !== null) {
+          res.json(tokenMetadata);
+          return;
         }
       }
 
-      if (hint === 'access_token' || !hint) {
+      if (hint === 'access_token' || hint === undefined) {
         // Try as access token
         tokenMetadata = await this.introspectAccessToken(params.token);
-        if (tokenMetadata) {
-          return res.json(tokenMetadata);
+        if (tokenMetadata !== null) {
+          res.json(tokenMetadata);
+          return;
         }
       }
 
       // Token is invalid or not found
-      return res.json({ active: false });
+      res.json({ active: false });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({
+        res.status(400).json({
           error: 'invalid_request',
-          error_description: error.errors.map((e) => e.message).join(', '),
+          error_description: error.issues.map((e) => e.message).join(', '),
         });
+        return;
       }
       next(error);
     }
@@ -98,7 +105,7 @@ export class IntrospectController {
   /**
    * Introspect a refresh token
    */
-  private async introspectRefreshToken(token: string, clientId: string): Promise<object | null> {
+  private async introspectRefreshToken(token: string, clientId: string): Promise<Record<string, unknown> | null> {
     const refreshTokenData = await this.oauthService.getRefreshToken(token);
 
     if (!refreshTokenData) {
@@ -140,7 +147,7 @@ export class IntrospectController {
   /**
    * Introspect an access token (JWT)
    */
-  private async introspectAccessToken(token: string): Promise<object | null> {
+  private async introspectAccessToken(token: string): Promise<Record<string, unknown> | null> {
     try {
       const payload = await this.tokenService.verifyAccessToken(token);
 

@@ -21,33 +21,36 @@ export class RevokeController {
       const params = revokeSchema.parse(req.body);
 
       // Validate client
-      const client = await this.oauthService.validateClient(params.client_id);
-      if (!client) {
-        return res.status(400).json({
+      const client = await this.oauthService.getClient(params.client_id);
+      if (client === null) {
+        res.status(400).json({
           error: 'invalid_client',
           error_description: 'Client not found',
         });
+        return;
       }
 
       // Authenticate confidential clients
-      if (client.client_type === 'confidential') {
+      if (this.oauthService.isConfidentialClient(client)) {
         if (!params.client_secret) {
-          return res.status(400).json({
+          res.status(400).json({
             error: 'invalid_client',
             error_description: 'Client secret is required for confidential clients',
           });
+          return;
         }
 
-        const isValidSecret = await this.oauthService.validateClientSecret(
-          client.id,
+        const isValidSecret = await this.oauthService.validateClientCredentials(
+          params.client_id,
           params.client_secret
         );
 
-        if (!isValidSecret) {
-          return res.status(401).json({
+        if (isValidSecret === false) {
+          res.status(401).json({
             error: 'invalid_client',
             error_description: 'Invalid client credentials',
           });
+          return;
         }
       }
 
@@ -60,10 +63,11 @@ export class RevokeController {
       res.status(200).end();
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({
+        res.status(400).json({
           error: 'invalid_request',
-          error_description: error.errors.map((e) => e.message).join(', '),
+          error_description: error.issues.map((e) => e.message).join(', '),
         });
+        return;
       }
       next(error);
     }

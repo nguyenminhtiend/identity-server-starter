@@ -68,7 +68,7 @@ export class KeyManagementService {
    * @param encryptionSecret - Master key for encrypting/decrypting private keys
    */
   static getInstance(encryptionSecret?: string): KeyManagementService {
-    if (!KeyManagementService.instance) {
+    if (KeyManagementService.instance === undefined) {
       if (!encryptionSecret) {
         throw new Error('Encryption secret is required for first initialization');
       }
@@ -178,11 +178,11 @@ export class KeyManagementService {
 
         publicKeys.push({
           kid: keyId,
-          kty: jwk.kty || 'RSA',
+          kty: jwk.kty ?? 'RSA',
           alg: keyPair.algorithm,
           use: 'sig',
-          n: jwk.n || '',
-          e: jwk.e || 'AQAB',
+          n: jwk.n ?? '',
+          e: jwk.e ?? 'AQAB',
         });
       } catch (error) {
         console.error(`Failed to export public key ${keyId}:`, error);
@@ -199,15 +199,15 @@ export class KeyManagementService {
    */
   async getKeyById(keyId: string): Promise<DecryptedKeyPair | null> {
     await this.refreshKeys();
-    return this.cachedKeys.get(keyId) || null;
+    return this.cachedKeys.get(keyId) ?? null;
   }
 
   /**
    * Generate a new RSA key pair
    * @returns Public and private keys in PEM format
    */
-  generateKeyPair(): Promise<{ publicKey: string; privateKey: string }> {
-    return generateRSAKeyPair();
+  async generateKeyPair(): Promise<{ publicKey: string; privateKey: string }> {
+    return await generateRSAKeyPair();
   }
 
   /**
@@ -281,6 +281,10 @@ export class KeyManagementService {
     // Invalidate cache to force refresh
     this.lastRefresh = new Date(0);
 
+    if (!newKey) {
+      throw new Error('Failed to create signing key');
+    }
+
     return newKey;
   }
 
@@ -289,7 +293,7 @@ export class KeyManagementService {
    * @returns The new primary key
    */
   async rotateKeys(): Promise<SigningKey> {
-    console.log('Starting key rotation...');
+    console.info('Starting key rotation...');
 
     // Get current primary key
     const [currentPrimary] = await db
@@ -311,13 +315,13 @@ export class KeyManagementService {
         })
         .where(eq(signingKeys.id, currentPrimary.id));
 
-      console.log(`Rotated key ${currentPrimary.keyId} -> ${newPrimaryKey.keyId}`);
+      console.info(`Rotated key ${currentPrimary.keyId} -> ${newPrimaryKey.keyId}`);
     }
 
     // Invalidate cache
     this.lastRefresh = new Date(0);
 
-    console.log('Key rotation completed');
+    console.info('Key rotation completed');
     return newPrimaryKey;
   }
 
@@ -337,7 +341,7 @@ export class KeyManagementService {
 
     const now = new Date();
     if (now >= primaryKey.nextRotationAt) {
-      console.log('Automatic key rotation triggered');
+      console.info('Automatic key rotation triggered');
       await this.rotateKeys();
     }
   }
@@ -352,7 +356,7 @@ export class KeyManagementService {
     // Invalidate cache
     this.lastRefresh = new Date(0);
 
-    console.log(`Key ${keyId} deactivated`);
+    console.info(`Key ${keyId} deactivated`);
   }
 
   /**

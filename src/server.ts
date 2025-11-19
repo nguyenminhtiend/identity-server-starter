@@ -38,7 +38,7 @@ async function createServer(): Promise<Application> {
   });
 
   await redisClient.connect();
-  console.log('✅ Connected to Redis');
+  console.info('✅ Connected to Redis');
 
   // Session store
   const redisStore = new RedisStore({
@@ -102,21 +102,21 @@ async function startServer(): Promise<void> {
     const port = config.port;
 
     app.listen(port, () => {
-      console.log('🚀 Identity Server started');
-      console.log(`📍 Environment: ${config.env}`);
-      console.log(`🌐 Server running on port ${port}`);
-      console.log(`🔗 Issuer URL: ${config.issuer}`);
-      console.log('');
-      console.log('OAuth 2.0 Endpoints:');
-      console.log(`  - Authorization: ${config.issuer}/oauth/authorize`);
-      console.log(`  - Token: ${config.issuer}/oauth/token`);
-      console.log(`  - Revoke: ${config.issuer}/oauth/revoke`);
-      console.log(`  - Introspect: ${config.issuer}/oauth/introspect`);
-      console.log('');
-      console.log('OpenID Connect Endpoints:');
-      console.log(`  - Discovery: ${config.issuer}/.well-known/openid-configuration`);
-      console.log(`  - JWKS: ${config.issuer}/.well-known/jwks.json`);
-      console.log(`  - UserInfo: ${config.issuer}/oauth/userinfo`);
+      console.info('🚀 Identity Server started');
+      console.info(`📍 Environment: ${config.env}`);
+      console.info(`🌐 Server running on port ${port}`);
+      console.info(`🔗 Issuer URL: ${config.issuer}`);
+      console.info('');
+      console.info('OAuth 2.0 Endpoints:');
+      console.info(`  - Authorization: ${config.issuer}/oauth/authorize`);
+      console.info(`  - Token: ${config.issuer}/oauth/token`);
+      console.info(`  - Revoke: ${config.issuer}/oauth/revoke`);
+      console.info(`  - Introspect: ${config.issuer}/oauth/introspect`);
+      console.info('');
+      console.info('OpenID Connect Endpoints:');
+      console.info(`  - Discovery: ${config.issuer}/.well-known/openid-configuration`);
+      console.info(`  - JWKS: ${config.issuer}/.well-known/jwks.json`);
+      console.info(`  - UserInfo: ${config.issuer}/oauth/userinfo`);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);
@@ -126,12 +126,12 @@ async function startServer(): Promise<void> {
 
 // Handle graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('SIGTERM signal received: closing HTTP server');
+  console.info('SIGTERM signal received: closing HTTP server');
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
-  console.log('SIGINT signal received: closing HTTP server');
+  console.info('SIGINT signal received: closing HTTP server');
   process.exit(0);
 });
 
