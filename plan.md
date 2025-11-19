@@ -58,29 +58,91 @@
 
 ## Phase 1: Foundation & Setup
 
-### 1.1 Project Initialization
+### 1.1 Project Initialization & Structure
 
-- Initialize pnpm project with `pnpm init`
-- Create directory structure:
-
-  ```
-  src/
-  ├── config/
-  ├── db/
-  │   ├── schema.ts
-  │   └── migrations/
-  ├── middleware/
-  ├── routes/
-  ├── services/
-  ├── utils/
-  ├── views/
-  └── server.ts
-  keys/
-  tests/
-  ```
-
+**Initialize Project:**
+- Run `pnpm init` to create package.json
 - Setup TypeScript config (strict mode, ESNext target)
 - Setup environment files (.env.example, .env)
+- Create `.gitignore` file
+
+**Module-Based Directory Structure:**
+
+```
+identity-server-starter/
+├── src/
+│   ├── modules/                    # Feature modules (domain-driven design)
+│   │   ├── auth/                   # Authentication module
+│   │   │   ├── controllers/        # Request handlers
+│   │   │   ├── services/           # Business logic
+│   │   │   ├── routes/             # Route definitions
+│   │   │   ├── validators/         # Input validation schemas
+│   │   │   └── views/              # EJS templates
+│   │   ├── oauth/                  # OAuth 2.0 module
+│   │   │   ├── controllers/
+│   │   │   ├── services/           # OAuthService, PKCEService
+│   │   │   ├── routes/
+│   │   │   ├── validators/
+│   │   │   └── views/
+│   │   ├── oidc/                   # OpenID Connect module
+│   │   │   ├── controllers/
+│   │   │   ├── services/
+│   │   │   └── routes/
+│   │   ├── user/                   # User management module
+│   │   │   ├── controllers/
+│   │   │   ├── services/
+│   │   │   ├── routes/
+│   │   │   └── validators/
+│   │   ├── client/                 # OAuth client management module
+│   │   │   ├── controllers/
+│   │   │   ├── services/
+│   │   │   ├── routes/
+│   │   │   └── validators/
+│   │   ├── organization/           # Multi-tenant organization module
+│   │   │   ├── controllers/
+│   │   │   ├── services/
+│   │   │   ├── routes/
+│   │   │   └── validators/
+│   │   ├── session/                # Session management module
+│   │   │   ├── services/
+│   │   │   └── routes/
+│   │   ├── key-management/         # Cryptographic key management module
+│   │   │   ├── controllers/
+│   │   │   ├── services/           # KeyManagementService
+│   │   │   ├── routes/
+│   │   │   └── validators/
+│   │   └── admin/                  # Admin panel module
+│   │       ├── controllers/
+│   │       ├── services/
+│   │       ├── routes/
+│   │       ├── validators/
+│   │       └── views/
+│   ├── shared/                     # Shared resources across modules
+│   │   ├── config/                 # Configuration loader with zod
+│   │   ├── database/               # Database connection and schemas
+│   │   │   ├── schema.ts           # Drizzle ORM schemas
+│   │   │   ├── migrations/         # Database migration files
+│   │   │   └── index.ts            # Database connection
+│   │   ├── middleware/             # Global middleware
+│   │   ├── utils/                  # Utility functions (crypto, etc.)
+│   │   └── types/                  # TypeScript type definitions
+│   └── server.ts                   # Main server entry point
+├── tests/
+│   ├── unit/                       # Unit tests
+│   ├── integration/                # Integration tests
+│   └── e2e/                        # End-to-end tests
+├── drizzle.config.ts               # Drizzle ORM configuration
+├── tsconfig.json                   # TypeScript configuration
+├── .env.example                    # Environment variable template
+└── .gitignore                      # Git ignore rules
+```
+
+**Module Design Principles:**
+- Each module is self-contained with its own controllers, services, routes, validators
+- Modules communicate through well-defined service interfaces
+- Shared code lives in `src/shared/`
+- Database schemas are centralized in `src/shared/database/schema.ts`
+- Each module handles a specific domain (auth, oauth, oidc, etc.)
 
 ### 1.2 Dependencies Installation
 
@@ -114,7 +176,7 @@ Files to create:
 - `tsconfig.json`: Strict TypeScript config
 - `drizzle.config.ts`: Drizzle ORM config
 - `.env.example`: Template for environment variables
-- `src/config/index.ts`: Config loader with zod validation
+- `src/shared/config/index.ts`: Config loader with zod validation
 
 Environment variables:
 
@@ -143,21 +205,11 @@ AZURE_KEY_VAULT_URL= # Optional: for Azure Key Vault
 ENABLE_MULTI_TENANT=false
 ```
 
-### 1.4 Initial Cryptographic Keys Setup
-
-**For Development Only** (Phase 1):
-- Generate initial RSA key pair (2048-bit) for JWT signing
-- Store temporarily in `keys/private.pem` and `keys/public.pem`
-- Add `keys/` to .gitignore
-- Create utility script: `src/utils/generateKeys.ts`
-
-**Note**: This is temporary for development. In Phase 2.4, keys will be migrated to database storage with proper key management (see Phase 2.4 and 3.6).
-
 ## Phase 2: Database Layer
 
 ### 2.1 Drizzle Schema Definition
 
-File: `src/db/schema.ts`
+File: `src/shared/database/schema.ts`
 
 Tables to define:
 
@@ -203,53 +255,53 @@ Tables to define:
 
 Files:
 
-- `src/db/index.ts`: Database connection setup
-- `src/db/migrations/`: Generated migration files
-- Create migration: `pnpm drizzle-kit generate:pg`
-- Apply migration: `pnpm drizzle-kit push:pg`
+- `src/shared/database/index.ts`: Database connection setup
+- `src/shared/database/migrations/`: Generated migration files
+- Create migration: `pnpm db:generate`
+- Apply migration: `pnpm db:push`
 
-### 2.3 Seed Data Script
+### 2.3 Initial Key Generation Utility
 
-File: `src/db/seed.ts`
+File: `src/modules/key-management/services/KeyGenerationService.ts`
 
+Purpose: Generate and store cryptographic keys directly in database
+
+- Generate RSA key pair (2048-bit) for JWT signing
+- Encrypt private key using KEY_ENCRYPTION_SECRET
+- Generate key_id (e.g., timestamp-based: "2025-01-19-v1")
+- Insert into `signing_keys` table with is_primary=true, is_active=true
+- Set next_rotation_at based on KEY_ROTATION_DAYS
+- Run via seed script or CLI command: `pnpm keys:generate`
+
+**Note**: Keys are stored in database from the start, no filesystem storage needed
+
+### 2.4 Seed Data Script
+
+File: `src/shared/database/seed.ts`
+
+- Generate and store initial signing key in database (using KeyGenerationService)
 - Create test user (test@example.com / Test123456!)
-- Create initial signing key in database (migrate from filesystem keys)
 - Create sample OAuth clients:
   - Confidential client (backend web app with client_secret)
   - Public client (SPA with PKCE, CORS configured)
   - Mobile app client (public with custom redirect URIs)
 - Create test organization (if multi-tenant enabled)
-- Run with: `pnpm tsx src/db/seed.ts`
-
-### 2.4 Key Migration Utility
-
-File: `src/utils/migrateKeysToDatabase.ts`
-
-Purpose: Migrate filesystem-stored keys to database
-
-- Read existing keys from `keys/private.pem` and `keys/public.pem`
-- Encrypt private key using KEY_ENCRYPTION_SECRET
-- Generate key_id (e.g., timestamp-based: "2025-01-19-v1")
-- Insert into `signing_keys` table with is_primary=true, is_active=true
-- Set next_rotation_at based on KEY_ROTATION_DAYS
-- Run with: `pnpm tsx src/utils/migrateKeysToDatabase.ts`
-
-**Note**: After migration, filesystem keys can be deleted (keep as backup initially)
+- Run with: `pnpm db:seed`
 
 ## Phase 3: Core Services & Utilities
 
 ### 3.1 Crypto Utilities
 
-Files:
+File: `src/shared/utils/crypto.ts`
 
-- `src/utils/crypto.ts`:
-  - bcrypt password hashing/verification
-  - Random token generation (crypto.randomBytes)
-  - SHA256 hashing for refresh tokens
+- bcrypt password hashing/verification
+- Random token generation (crypto.randomBytes)
+- SHA256 hashing for refresh tokens
+- AES encryption/decryption for private keys
 
 ### 3.2 PKCE Service
 
-File: `src/services/PKCEService.ts`
+File: `src/modules/oauth/services/PKCEService.ts`
 
 - Validate code_challenge_method (S256 only)
 - Verify code_verifier against code_challenge
@@ -257,7 +309,7 @@ File: `src/services/PKCEService.ts`
 
 ### 3.3 Token Service
 
-File: `src/services/TokenService.ts`
+File: `src/modules/oauth/services/TokenService.ts`
 
 - Generate JWT access tokens (RS256, 15 min)
 - Generate ID tokens (OIDC)
@@ -267,7 +319,7 @@ File: `src/services/TokenService.ts`
 
 ### 3.4 OAuth Service
 
-File: `src/services/OAuthService.ts`
+File: `src/modules/oauth/services/OAuthService.ts`
 
 - Create authorization code
 - Exchange code for tokens
@@ -280,18 +332,16 @@ File: `src/services/OAuthService.ts`
 
 ### 3.5 Validation Schemas
 
-File: `src/utils/validation.ts`
+Files in each module's `validators/` directory:
 
-- Zod schemas for OAuth parameters
-- Email/password validation
-- URL validation for redirect_uri
-- Scope validation
-- Client type validation
-- CORS origin validation
+- `src/modules/oauth/validators/`: OAuth parameters, redirect URIs, scopes
+- `src/modules/auth/validators/`: Email/password validation
+- `src/modules/client/validators/`: Client type, CORS origins
+- `src/shared/utils/validation.ts`: Common validation utilities
 
 ### 3.6 Key Management Service
 
-File: `src/services/KeyManagementService.ts`
+File: `src/modules/key-management/services/KeyManagementService.ts`
 
 **Purpose**: Centralized cryptographic key lifecycle management
 
@@ -334,7 +384,7 @@ class KeyManagementService {
 
 ## Phase 4: Middleware
 
-Files to create in `src/middleware/`:
+Files to create in `src/shared/middleware/`:
 
 ### 4.1 Error Handler
 
@@ -366,7 +416,9 @@ Files to create in `src/middleware/`:
 
 ## Phase 5: OAuth 2.0 Endpoints
 
-File: `src/routes/oauth.ts`
+Files:
+- Routes: `src/modules/oauth/routes/index.ts`
+- Controllers: `src/modules/oauth/controllers/`
 
 ### 5.1 Authorization Endpoint
 
@@ -418,7 +470,9 @@ Response:
 
 ## Phase 6: OpenID Connect (OIDC)
 
-File: `src/routes/oidc.ts`
+Files:
+- Routes: `src/modules/oidc/routes/index.ts`
+- Controllers: `src/modules/oidc/controllers/`
 
 ### 6.1 Discovery Document
 
@@ -487,7 +541,7 @@ Response format:
 
 ## Phase 7: User Interface
 
-Files in `src/views/`:
+Files in `src/modules/auth/views/`:
 
 ### 7.1 Login Page
 
@@ -527,8 +581,11 @@ Files in `src/views/`:
 
 ### 7.5 Routes
 
-File: `src/routes/auth.ts`
+Files:
+- `src/modules/auth/routes/index.ts`
+- Controllers: `src/modules/auth/controllers/`
 
+Endpoints:
 - `GET /login`
 - `POST /login`
 - `GET /register`
@@ -539,7 +596,10 @@ File: `src/routes/auth.ts`
 
 ## Phase 8: Client Management
 
-File: `src/routes/admin.ts`
+Files:
+- Routes: `src/modules/admin/routes/index.ts`
+- Controllers: `src/modules/admin/controllers/`
+- Services: `src/modules/client/services/ClientService.ts`
 
 Admin endpoints (protected by admin authentication):
 
@@ -579,8 +639,12 @@ Admin endpoints (protected by admin authentication):
 
 ### 8.2 Organization Management (if multi-tenant enabled)
 
-File: `src/routes/admin/organizations.ts`
+Files:
+- Routes: `src/modules/organization/routes/index.ts`
+- Controllers: `src/modules/organization/controllers/`
+- Services: `src/modules/organization/services/OrganizationService.ts`
 
+Endpoints:
 - `POST /admin/organizations`: Create organization
 - `GET /admin/organizations`: List organizations
 - `GET /admin/organizations/:id`: Get organization details
@@ -589,8 +653,11 @@ File: `src/routes/admin/organizations.ts`
 
 ### 8.3 Key Management Admin Endpoints
 
-File: `src/routes/admin/keys.ts`
+Files:
+- Routes: `src/modules/key-management/routes/index.ts`
+- Controllers: `src/modules/key-management/controllers/`
 
+Endpoints:
 - `GET /admin/keys`: List all signing keys (active and inactive)
   - Never return private keys, only metadata
 - `POST /admin/keys/rotate`: Manually trigger key rotation
@@ -600,7 +667,7 @@ File: `src/routes/admin/keys.ts`
 
 ## Phase 9: Session Management
 
-File: `src/config/session.ts`
+File: `src/shared/config/session.ts`
 
 Setup:
 
@@ -640,13 +707,13 @@ Update `package.json`:
     "dev": "nodemon --exec tsx src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "db:generate": "drizzle-kit generate:pg",
-    "db:push": "drizzle-kit push:pg",
-    "db:seed": "tsx src/db/seed.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "tsx src/shared/database/seed.ts",
     "db:studio": "drizzle-kit studio",
-    "keys:generate": "tsx src/utils/generateKeys.ts",
-    "keys:migrate": "tsx src/utils/migrateKeysToDatabase.ts",
-    "keys:rotate": "tsx src/utils/rotateKeys.ts"
+    "keys:generate": "tsx src/modules/key-management/services/KeyGenerationService.ts",
+    "keys:rotate": "tsx src/modules/key-management/services/KeyRotationService.ts"
   }
 }
 ```
@@ -731,58 +798,60 @@ Files: `src/services/kms/`
 ## Implementation Checklist
 
 ### Phase 1: Foundation
-- [ ] Initialize project with package.json, tsconfig.json, directory structure
+- [ ] Initialize project with package.json, tsconfig.json
+- [ ] Create module-based directory structure
 - [ ] Install dependencies (express, drizzle, redis, jose, bcrypt, etc.)
-- [ ] Setup environment config with zod validation
-- [ ] Generate initial RSA key pair for development (temporary filesystem storage)
+- [ ] Setup environment config with zod validation in `src/shared/config/`
+- [ ] Create .gitignore file
 
 ### Phase 2: Database Layer
-- [ ] Define Drizzle schemas: users, organizations, clients, auth codes, refresh tokens, consents, signing_keys
+- [ ] Define Drizzle schemas in `src/shared/database/schema.ts`: users, organizations, clients, auth codes, refresh tokens, consents, signing_keys
 - [ ] Add client_type, CORS origins, metadata URLs to clients table
-- [ ] Setup database connection and create migrations
-- [ ] Create seed script with multiple client types (confidential, public, mobile)
-- [ ] Build key migration utility to move filesystem keys to database
+- [ ] Setup database connection in `src/shared/database/index.ts`
+- [ ] Create database migrations
+- [ ] Build KeyGenerationService for direct database key storage
+- [ ] Create seed script with initial key generation and sample clients (confidential, public, mobile)
 
 ### Phase 3: Core Services
-- [ ] Implement crypto utilities (bcrypt, random tokens, SHA256)
-- [ ] Build PKCE service with S256 validation
-- [ ] Create KeyManagementService for database-stored keys with rotation
-- [ ] Build TokenService with kid header support for key rotation
-- [ ] Implement OAuthService with client type awareness
-- [ ] Create validation schemas for client types and CORS origins
+- [ ] Implement crypto utilities in `src/shared/utils/crypto.ts` (bcrypt, random tokens, SHA256, AES encryption)
+- [ ] Build PKCEService in `src/modules/oauth/services/` with S256 validation
+- [ ] Create KeyManagementService in `src/modules/key-management/services/` for database-stored keys with rotation
+- [ ] Build TokenService in `src/modules/oauth/services/` with kid header support for key rotation
+- [ ] Implement OAuthService in `src/modules/oauth/services/` with client type awareness
+- [ ] Create validation schemas in each module's validators directory
 
 ### Phase 4: Middleware
-- [ ] Build error handler with OAuth error responses
+- [ ] Build error handler with OAuth error responses in `src/shared/middleware/`
 - [ ] Create authentication middleware (session + JWT)
 - [ ] Implement rate limiting for all endpoints
 - [ ] Setup security headers with Helmet and per-client CORS
 - [ ] Create request validation middleware
 
 ### Phase 5: OAuth 2.0 Endpoints
-- [ ] Implement /oauth/authorize with PKCE enforcement for public clients
+- [ ] Implement /oauth/authorize with PKCE enforcement in `src/modules/oauth/`
 - [ ] Build /oauth/token with client type validation
 - [ ] Create /oauth/revoke endpoint
 - [ ] Implement /oauth/introspect endpoint
 
 ### Phase 6: OIDC Endpoints
-- [ ] Build OIDC discovery document endpoint
+- [ ] Build OIDC discovery document endpoint in `src/modules/oidc/`
 - [ ] Implement JWKS endpoint with multi-key support
 - [ ] Create /oauth/userinfo endpoint
 
 ### Phase 7: User Interface
-- [ ] Create login, registration, consent, and error EJS templates
-- [ ] Build authentication routes (login, register, logout, consent)
+- [ ] Create login, registration, consent, and error EJS templates in `src/modules/auth/views/`
+- [ ] Build authentication routes and controllers in `src/modules/auth/`
 
 ### Phase 8: Admin & Client Management
-- [ ] Implement client CRUD endpoints with client type support
+- [ ] Implement client CRUD endpoints in `src/modules/admin/` and `src/modules/client/`
 - [ ] Build client secret regeneration endpoint
-- [ ] Create organization management endpoints (if multi-tenant)
-- [ ] Implement key rotation admin endpoints
+- [ ] Create organization management in `src/modules/organization/` (if multi-tenant)
+- [ ] Implement key rotation admin endpoints in `src/modules/key-management/`
 
 ### Phase 9: Session Management
-- [ ] Setup Redis session store with connect-redis
+- [ ] Setup Redis session store with connect-redis in `src/shared/config/session.ts`
 - [ ] Configure secure session cookies
-- [ ] Implement CSRF protection
+- [ ] Implement CSRF protection in `src/modules/session/`
 
 ### Phase 10: Testing & Documentation
 - [ ] Write unit tests for services (KeyManagementService, TokenService, OAuthService)
