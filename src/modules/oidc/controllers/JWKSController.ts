@@ -1,16 +1,15 @@
 import { type Request, type Response } from 'express';
-import { KeyManagementService } from '../../key-management/services/KeyManagementService.js';
-import { config } from '../../../shared/config/index.js';
+import type { IKeyManagementService } from '../../key-management/services/interfaces/IKeyManagementService.js';
 
 /**
  * JWKS Controller
  * Handles JSON Web Key Set endpoints
  */
 export class JWKSController {
-  private keyManagementService: KeyManagementService;
+  private keyManagementService: IKeyManagementService;
 
-  constructor() {
-    this.keyManagementService = KeyManagementService.getInstance(config.keys.encryptionSecret);
+  constructor(keyManagementService: IKeyManagementService) {
+    this.keyManagementService = keyManagementService;
   }
 
   /**
@@ -28,5 +27,3 @@ export class JWKSController {
     });
   }
 }
-
-export const jwksController = new JWKSController();

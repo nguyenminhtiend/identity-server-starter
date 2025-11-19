@@ -1,7 +1,7 @@
 import { type Request, type Response } from 'express';
 import { z } from 'zod';
-import { type OAuthService } from '../services/OAuthService';
-import { type TokenService } from '../services/TokenService';
+import type { IOAuthService } from '../services/interfaces/IOAuthService.js';
+import type { ITokenService } from '../services/interfaces/ITokenService.js';
 
 const authorizationCodeGrantSchema = z.object({
   grant_type: z.literal('authorization_code'),
@@ -29,8 +29,8 @@ const clientCredentialsGrantSchema = z.object({
 
 export class TokenController {
   constructor(
-    private oauthService: OAuthService,
-    private tokenService: TokenService
+    private oauthService: IOAuthService,
+    private tokenService: ITokenService
   ) {}
 
   /**

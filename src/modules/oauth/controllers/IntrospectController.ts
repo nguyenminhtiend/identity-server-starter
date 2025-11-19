@@ -1,7 +1,7 @@
 import { type Request, type Response } from 'express';
 import { z } from 'zod';
-import { type OAuthService } from '../services/OAuthService';
-import { type TokenService } from '../services/TokenService';
+import type { IOAuthService } from '../services/interfaces/IOAuthService.js';
+import type { ITokenService } from '../services/interfaces/ITokenService.js';
 import type { OAuthJWTPayload, RefreshTokenData } from '../../../shared/types/oauth';
 
 const introspectSchema = z.object({
@@ -13,8 +13,8 @@ const introspectSchema = z.object({
 
 export class IntrospectController {
   constructor(
-    private oauthService: OAuthService,
-    private tokenService: TokenService
+    private oauthService: IOAuthService,
+    private tokenService: ITokenService
   ) {}
 
   /**

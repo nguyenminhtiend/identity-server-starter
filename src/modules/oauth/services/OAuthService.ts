@@ -14,29 +14,9 @@ import {
   constantTimeCompare as _constantTimeCompare,
 } from '../../../shared/utils/crypto.js';
 import { PKCEService } from './PKCEService.js';
-import { TokenService, type UserInfo } from './TokenService.js';
-
-/**
- * OAuth Client record
- */
-export interface OAuthClient {
-  id: string;
-  clientId: string;
-  clientSecretHash: string | null;
-  name: string;
-  clientType: string;
-  organizationId: string | null;
-  redirectUris: string[];
-  grantTypes: string[];
-  allowedScopes: string;
-  logoUrl: string | null;
-  allowedCorsOrigins: string[] | null;
-  termsUrl: string | null;
-  privacyUrl: string | null;
-  homepageUrl: string | null;
-  contacts: string[] | null;
-  isActive: boolean;
-}
+import type { UserInfo } from './TokenService.js';
+import type { ITokenService } from './interfaces/ITokenService.js';
+import type { IOAuthService, OAuthClient, TokenResponse } from './interfaces/IOAuthService.js';
 
 /**
  * Authorization code record
@@ -55,18 +35,6 @@ export interface AuthorizationCode {
 }
 
 /**
- * Token generation result
- */
-export interface TokenResponse {
-  access_token: string;
-  token_type: string;
-  expires_in: number;
-  refresh_token?: string;
-  id_token?: string;
-  scope: string;
-}
-
-/**
  * OAuth Service
  * Handles OAuth 2.0 authorization flow logic
  * - Client validation and authentication
@@ -74,11 +42,11 @@ export interface TokenResponse {
  * - Refresh token rotation
  * - Consent management
  */
-export class OAuthService {
-  private tokenService: TokenService;
+export class OAuthService implements IOAuthService {
+  private tokenService: ITokenService;
 
-  constructor(issuer: string) {
-    this.tokenService = new TokenService(issuer);
+  constructor(tokenService: ITokenService) {
+    this.tokenService = tokenService;
   }
 
   /**

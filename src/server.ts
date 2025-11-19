@@ -6,10 +6,15 @@ import path from 'path';
 import { config } from './shared/config';
 import { errorHandler } from './shared/middleware/errorHandler';
 import { helmetConfig, devCorsMiddleware } from './shared/middleware/security';
+import { configureDIContainer } from './shared/di/container.js';
 import oauthRoutes from './modules/oauth/routes';
 import oidcRoutes from './modules/oidc/routes';
 
 async function createServer(): Promise<Application> {
+  // Initialize DI container before anything else
+  configureDIContainer();
+  console.info('✅ DI Container configured');
+
   const app = express();
 
   // View engine setup

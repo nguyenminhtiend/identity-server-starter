@@ -1,6 +1,6 @@
 import { type Request, type Response } from 'express';
 import { z } from 'zod';
-import { type OAuthService } from '../services/OAuthService';
+import type { IOAuthService } from '../services/interfaces/IOAuthService.js';
 
 const authorizeSchema = z.object({
   client_id: z.string().min(1),
@@ -13,7 +13,7 @@ const authorizeSchema = z.object({
 });
 
 export class AuthorizeController {
-  constructor(private oauthService: OAuthService) {}
+  constructor(private oauthService: IOAuthService) {}
 
   /**
    * GET /oauth/authorize

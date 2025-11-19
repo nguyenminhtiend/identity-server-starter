@@ -1,6 +1,5 @@
 import { type Request, type Response } from 'express';
-import { TokenService } from '../../oauth/services/TokenService.js';
-import { config } from '../../../shared/config/index.js';
+import type { ITokenService } from '../../oauth/services/interfaces/ITokenService.js';
 import { db, users } from '../../../shared/database/index.js';
 import { eq } from 'drizzle-orm';
 import type { OAuthJWTPayload } from '../../../shared/types/oauth';
@@ -23,10 +22,10 @@ interface UserInfoResponse {
  * Handles the OIDC UserInfo endpoint
  */
 export class UserInfoController {
-  private tokenService: TokenService;
+  private tokenService: ITokenService;
 
-  constructor() {
-    this.tokenService = new TokenService(config.issuer);
+  constructor(tokenService: ITokenService) {
+    this.tokenService = tokenService;
   }
 
   /**
@@ -119,5 +118,3 @@ export class UserInfoController {
     res.json(userInfo);
   }
 }
-
-export const userInfoController = new UserInfoController();

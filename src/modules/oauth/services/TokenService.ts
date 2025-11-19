@@ -1,5 +1,6 @@
 import * as jose from 'jose';
-import { KeyManagementService } from '../../key-management/services/KeyManagementService.js';
+import type { IKeyManagementService } from '../../key-management/services/interfaces/IKeyManagementService.js';
+import type { ITokenService } from './interfaces/ITokenService.js';
 
 /**
  * JWT Token Payload (standard claims)
@@ -50,13 +51,13 @@ export interface UserInfo {
  * - Includes kid (key ID) header for key rotation support
  * - Supports OIDC ID tokens
  */
-export class TokenService {
-  private keyManagementService: KeyManagementService;
+export class TokenService implements ITokenService {
+  private keyManagementService: IKeyManagementService;
   private issuer: string;
 
-  constructor(issuer: string) {
+  constructor(issuer: string, keyManagementService: IKeyManagementService) {
     this.issuer = issuer;
-    this.keyManagementService = KeyManagementService.getInstance();
+    this.keyManagementService = keyManagementService;
   }
 
   /**

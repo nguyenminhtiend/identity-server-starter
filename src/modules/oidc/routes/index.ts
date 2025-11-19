@@ -1,7 +1,23 @@
 import { Router, type Router as RouterType } from 'express';
-import { discoveryController } from '../controllers/DiscoveryController.js';
-import { jwksController } from '../controllers/JWKSController.js';
-import { userInfoController } from '../controllers/UserInfoController.js';
+import { DiscoveryController } from '../controllers/DiscoveryController.js';
+import { JWKSController } from '../controllers/JWKSController.js';
+import { UserInfoController } from '../controllers/UserInfoController.js';
+import { getService, SERVICE_IDENTIFIERS } from '../../../shared/di/container.js';
+import type { ITokenService } from '../../oauth/services/interfaces/ITokenService.js';
+import type { IKeyManagementService } from '../../key-management/services/interfaces/IKeyManagementService.js';
+import type { OIDCService } from '../services/OIDCService.js';
+
+// Get services from DI container
+const tokenService = getService<ITokenService>(SERVICE_IDENTIFIERS.TokenService);
+const keyManagementService = getService<IKeyManagementService>(
+  SERVICE_IDENTIFIERS.KeyManagementService
+);
+const oidcService = getService<OIDCService>(SERVICE_IDENTIFIERS.OIDCService);
+
+// Initialize controllers with injected dependencies
+const discoveryController = new DiscoveryController(oidcService);
+const jwksController = new JWKSController(keyManagementService);
+const userInfoController = new UserInfoController(tokenService);
 
 const router: RouterType = Router();
 

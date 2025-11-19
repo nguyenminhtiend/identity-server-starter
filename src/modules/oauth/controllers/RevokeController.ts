@@ -1,6 +1,6 @@
 import { type Request, type Response } from 'express';
 import { z } from 'zod';
-import { type OAuthService } from '../services/OAuthService';
+import type { IOAuthService } from '../services/interfaces/IOAuthService.js';
 
 const revokeSchema = z.object({
   token: z.string().min(1),
@@ -10,7 +10,7 @@ const revokeSchema = z.object({
 });
 
 export class RevokeController {
-  constructor(private oauthService: OAuthService) {}
+  constructor(private oauthService: IOAuthService) {}
 
   /**
    * POST /oauth/revoke
