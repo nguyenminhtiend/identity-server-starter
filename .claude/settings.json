@@ -51,21 +51,11 @@
   "hooks": {
     "PostToolUse": [
       {
-        "matcher": "Write",
+        "matcher": "Write|Edit",
         "hooks": [
           {
             "type": "command",
-            "command": "echo '\n🔧 Running code quality checks after Write...\n' && pnpm format && echo '✅ Format complete\n' && pnpm lint:fix && echo '✅ Lint complete\n' && pnpm typecheck && echo '\n✅ All code quality checks passed!\n'",
-            "timeout": 120
-          }
-        ]
-      },
-      {
-        "matcher": "Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo '\n🔧 Running code quality checks after Edit...\n' && pnpm format && echo '✅ Format complete\n' && pnpm lint:fix && echo '✅ Lint complete\n' && pnpm typecheck && echo '\n✅ All code quality checks passed!\n'",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/post-edit.sh",
             "timeout": 120
           }
         ]
