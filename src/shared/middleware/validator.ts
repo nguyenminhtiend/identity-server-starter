@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { z, type ZodSchema, ZodError } from 'zod';
+import { z, type ZodTypeAny, ZodError } from 'zod';
 import { OAuthErrors } from './errorHandler.js';
 
 /**
@@ -19,7 +19,7 @@ interface ValidateOptions {
  * Generic validation middleware factory
  * Validates request data against a Zod schema
  */
-export function validate(schema: ZodSchema, options: ValidateOptions = {}) {
+export function validate(schema: ZodTypeAny, options: ValidateOptions = {}) {
   const { target = 'body', stripUnknown = true } = options;
 
   return (req: Request, _res: Response, next: NextFunction): void => {
@@ -54,28 +54,28 @@ export function validate(schema: ZodSchema, options: ValidateOptions = {}) {
 /**
  * Validate request body
  */
-export function validateBody(schema: ZodSchema) {
+export function validateBody(schema: ZodTypeAny) {
   return validate(schema, { target: 'body' });
 }
 
 /**
  * Validate query parameters
  */
-export function validateQuery(schema: ZodSchema) {
+export function validateQuery(schema: ZodTypeAny) {
   return validate(schema, { target: 'query' });
 }
 
 /**
  * Validate URL parameters
  */
-export function validateParams(schema: ZodSchema) {
+export function validateParams(schema: ZodTypeAny) {
   return validate(schema, { target: 'params' });
 }
 
 /**
  * Validate request headers
  */
-export function validateHeaders(schema: ZodSchema) {
+export function validateHeaders(schema: ZodTypeAny) {
   return validate(schema, { target: 'headers', stripUnknown: false });
 }
 
@@ -112,33 +112,30 @@ export const commonSchemas = {
   /**
    * URL validation
    */
-  url: z.string().url(),
+  url: z.url(),
 
   /**
    * Redirect URI validation
    * Must be HTTPS in production, can be HTTP for localhost
    */
-  redirectUri: z
-    .string()
-    .url()
-    .refine(
-      (url) => {
-        const parsed = new URL(url);
+  redirectUri: z.url().refine(
+    (url) => {
+      const parsed = new URL(url);
 
-        // Allow HTTP for localhost in development
-        if (process.env.NODE_ENV === 'development') {
-          if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
-            return true;
-          }
+      // Allow HTTP for localhost in development
+      if (process.env.NODE_ENV === 'development') {
+        if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
+          return true;
         }
-
-        // Require HTTPS for all other cases
-        return parsed.protocol === 'https:';
-      },
-      {
-        message: 'Redirect URI must use HTTPS (except localhost in development)',
       }
-    ),
+
+      // Require HTTPS for all other cases
+      return parsed.protocol === 'https:';
+    },
+    {
+      message: 'Redirect URI must use HTTPS (except localhost in development)',
+    }
+  ),
 
   /**
    * Client ID validation
@@ -241,7 +238,7 @@ export const commonSchemas = {
  * Helper to create a schema for JSON string fields
  * Useful for validating JSON fields in query parameters
  */
-export function jsonStringSchema<T>(schema: ZodSchema<T>) {
+export function jsonStringSchema<T>(schema: z.ZodType<T>) {
   return z
     .string()
     .transform((val): unknown => {
@@ -257,7 +254,7 @@ export function jsonStringSchema<T>(schema: ZodSchema<T>) {
 /**
  * Helper to create a schema for comma-separated string arrays
  */
-export function commaSeparatedString(itemSchema?: ZodSchema): ZodSchema {
+export function commaSeparatedString(itemSchema?: ZodTypeAny): ZodTypeAny {
   const schema = itemSchema ?? z.string();
   return z
     .string()

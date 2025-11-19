@@ -4,7 +4,7 @@ import { type OAuthService } from '../services/OAuthService';
 
 const authorizeSchema = z.object({
   client_id: z.string().min(1),
-  redirect_uri: z.string().url(),
+  redirect_uri: z.url(),
   response_type: z.literal('code'),
   scope: z.string().min(1),
   state: z.optional(z.string()),

@@ -13,17 +13,17 @@ const configSchema = z.object({
     .default(() => 3000),
 
   // Database
-  DATABASE_URL: z.string().url(),
+  DATABASE_URL: z.url(),
 
   // Redis
-  REDIS_URL: z.string().url(),
+  REDIS_URL: z.url(),
 
   // Session & Security
   SESSION_SECRET: z.string().min(32, 'Session secret must be at least 32 characters'),
   KEY_ENCRYPTION_SECRET: z.string().min(32, 'Key encryption secret must be at least 32 characters'),
 
   // Token Configuration
-  ISSUER_URL: z.string().url(),
+  ISSUER_URL: z.url(),
   ACCESS_TOKEN_TTL: z
     .string()
     .transform(Number)
@@ -43,7 +43,7 @@ const configSchema = z.object({
     .default(() => 90),
   KMS_PROVIDER: z.enum(['local', 'aws', 'azure', 'gcp']).default('local'),
   AWS_KMS_KEY_ID: z.optional(z.string()),
-  AZURE_KEY_VAULT_URL: z.union([z.optional(z.string().url()), z.literal('')]),
+  AZURE_KEY_VAULT_URL: z.union([z.optional(z.url()), z.literal('')]),
   GCP_KMS_KEY_NAME: z.optional(z.string()),
 
   // Multi-tenant
