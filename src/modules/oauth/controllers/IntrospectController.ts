@@ -1,4 +1,4 @@
-import { type Request, type Response, type NextFunction } from 'express';
+import { type Request, type Response } from 'express';
 import { z } from 'zod';
 import { type OAuthService } from '../services/OAuthService';
 import { type TokenService } from '../services/TokenService';
@@ -21,85 +21,74 @@ export class IntrospectController {
    * OAuth 2.0 Token Introspection Endpoint (RFC 7662)
    * Returns metadata about a token
    */
-  async introspect(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const params = introspectSchema.parse(req.body);
+  async introspect(req: Request, res: Response): Promise<void> {
+    const params = introspectSchema.parse(req.body);
 
-      // Validate client
-      const client = await this.oauthService.getClient(params.client_id);
-      if (client === null) {
-        res.status(400).json({
-          error: 'invalid_client',
-          error_description: 'Client not found',
-        });
-        return;
-      }
-
-      // Authenticate confidential clients (introspection requires authentication)
-      if (this.oauthService.isConfidentialClient(client)) {
-        if (!params.client_secret) {
-          res.status(400).json({
-            error: 'invalid_client',
-            error_description: 'Client secret is required for confidential clients',
-          });
-          return;
-        }
-
-        const isValidSecret = await this.oauthService.validateClientCredentials(
-          params.client_id,
-          params.client_secret
-        );
-
-        if (isValidSecret === false) {
-          res.status(401).json({
-            error: 'invalid_client',
-            error_description: 'Invalid client credentials',
-          });
-          return;
-        }
-      } else {
-        // Public clients must provide client_secret for introspection
-        res.status(400).json({
-          error: 'invalid_client',
-          error_description: 'Token introspection requires client authentication',
-        });
-        return;
-      }
-
-      // Determine token type and validate
-      let tokenMetadata: Record<string, unknown> | null;
-      const hint = params.token_type_hint;
-
-      if (hint === 'refresh_token' || hint === undefined) {
-        // Try as refresh token first
-        tokenMetadata = await this.introspectRefreshToken(params.token, client.id);
-        if (tokenMetadata !== null) {
-          res.json(tokenMetadata);
-          return;
-        }
-      }
-
-      if (hint === 'access_token' || hint === undefined) {
-        // Try as access token
-        tokenMetadata = await this.introspectAccessToken(params.token);
-        if (tokenMetadata !== null) {
-          res.json(tokenMetadata);
-          return;
-        }
-      }
-
-      // Token is invalid or not found
-      res.json({ active: false });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        res.status(400).json({
-          error: 'invalid_request',
-          error_description: error.issues.map((e) => e.message).join(', '),
-        });
-        return;
-      }
-      next(error);
+    // Validate client
+    const client = await this.oauthService.getClient(params.client_id);
+    if (client === null) {
+      res.status(400).json({
+        error: 'invalid_client',
+        error_description: 'Client not found',
+      });
+      return;
     }
+
+    // Authenticate confidential clients (introspection requires authentication)
+    if (this.oauthService.isConfidentialClient(client)) {
+      if (!params.client_secret) {
+        res.status(400).json({
+          error: 'invalid_client',
+          error_description: 'Client secret is required for confidential clients',
+        });
+        return;
+      }
+
+      const isValidSecret = await this.oauthService.validateClientCredentials(
+        params.client_id,
+        params.client_secret
+      );
+
+      if (isValidSecret === false) {
+        res.status(401).json({
+          error: 'invalid_client',
+          error_description: 'Invalid client credentials',
+        });
+        return;
+      }
+    } else {
+      // Public clients must provide client_secret for introspection
+      res.status(400).json({
+        error: 'invalid_client',
+        error_description: 'Token introspection requires client authentication',
+      });
+      return;
+    }
+
+    // Determine token type and validate
+    let tokenMetadata: Record<string, unknown> | null;
+    const hint = params.token_type_hint;
+
+    if (hint === 'refresh_token' || hint === undefined) {
+      // Try as refresh token first
+      tokenMetadata = await this.introspectRefreshToken(params.token, client.id);
+      if (tokenMetadata !== null) {
+        res.json(tokenMetadata);
+        return;
+      }
+    }
+
+    if (hint === 'access_token' || hint === undefined) {
+      // Try as access token
+      tokenMetadata = await this.introspectAccessToken(params.token);
+      if (tokenMetadata !== null) {
+        res.json(tokenMetadata);
+        return;
+      }
+    }
+
+    // Token is invalid or not found
+    res.json({ active: false });
   }
 
   /**

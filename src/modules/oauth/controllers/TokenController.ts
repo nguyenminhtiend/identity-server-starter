@@ -1,4 +1,4 @@
-import { type Request, type Response, type NextFunction } from 'express';
+import { type Request, type Response } from 'express';
 import { z } from 'zod';
 import { type OAuthService } from '../services/OAuthService';
 import { type TokenService } from '../services/TokenService';
@@ -38,33 +38,22 @@ export class TokenController {
    * OAuth 2.0 Token Endpoint
    * Supports: authorization_code, refresh_token, client_credentials
    */
-  async token(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const { grant_type } = req.body;
+  async token(req: Request, res: Response): Promise<void> {
+    const { grant_type } = req.body;
 
-      switch (grant_type) {
-        case 'authorization_code':
-          return await this.handleAuthorizationCodeGrant(req, res);
-        case 'refresh_token':
-          return await this.handleRefreshTokenGrant(req, res);
-        case 'client_credentials':
-          return await this.handleClientCredentialsGrant(req, res);
-        default:
-          res.status(400).json({
-            error: 'unsupported_grant_type',
-            error_description: `Grant type '${grant_type}' is not supported`,
-          });
-          return;
-      }
-    } catch (error) {
-      if (error instanceof z.ZodError) {
+    switch (grant_type) {
+      case 'authorization_code':
+        return await this.handleAuthorizationCodeGrant(req, res);
+      case 'refresh_token':
+        return await this.handleRefreshTokenGrant(req, res);
+      case 'client_credentials':
+        return await this.handleClientCredentialsGrant(req, res);
+      default:
         res.status(400).json({
-          error: 'invalid_request',
-          error_description: error.issues.map((e) => e.message).join(', '),
+          error: 'unsupported_grant_type',
+          error_description: `Grant type '${grant_type}' is not supported`,
         });
         return;
-      }
-      next(error);
     }
   }
 
