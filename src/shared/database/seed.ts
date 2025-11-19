@@ -74,7 +74,7 @@ async function seed() {
         clientSecretHash: confidentialClientSecretHash,
         name: 'Backend Web Application',
         clientType: 'confidential',
-        organizationId: testOrganization?.id || null,
+        organizationId: testOrganization?.id ?? null,
         redirectUris: ['http://localhost:3001/callback', 'http://localhost:3001/auth/callback'],
         grantTypes: ['authorization_code', 'refresh_token', 'client_credentials'],
         allowedScopes: 'openid profile email',
@@ -105,7 +105,7 @@ async function seed() {
         clientSecretHash: null, // No secret for public clients
         name: 'Single Page Application',
         clientType: 'public',
-        organizationId: testOrganization?.id || null,
+        organizationId: testOrganization?.id ?? null,
         redirectUris: ['http://localhost:5173/callback', 'http://localhost:5173/auth/callback'],
         grantTypes: ['authorization_code', 'refresh_token'],
         allowedScopes: 'openid profile email',
@@ -136,7 +136,7 @@ async function seed() {
         clientSecretHash: null, // No secret for public clients
         name: 'Mobile Application',
         clientType: 'public',
-        organizationId: testOrganization?.id || null,
+        organizationId: testOrganization?.id ?? null,
         redirectUris: ['myapp://callback', 'com.example.myapp://callback'],
         grantTypes: ['authorization_code', 'refresh_token'],
         allowedScopes: 'openid profile email offline_access',

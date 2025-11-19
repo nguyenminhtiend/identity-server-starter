@@ -161,10 +161,10 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction):
   }
 
   // Check CSRF token
-  const csrfToken = req.body._csrf || req.headers['x-csrf-token'];
+  const csrfToken = (req.body as { _csrf?: string })._csrf ?? req.headers['x-csrf-token'];
   const sessionToken = req.session?.csrfToken;
 
-  if (!csrfToken || csrfToken !== sessionToken) {
+  if (csrfToken === undefined || csrfToken !== sessionToken) {
     res.status(403).json({
       error: 'invalid_request',
       error_description: 'CSRF token validation failed',
@@ -179,15 +179,13 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction):
  * Generate and attach CSRF token to session
  */
 export function generateCsrfToken(req: Request, res: Response, next: NextFunction): void {
-  if (!req.session) {
+  if (req.session === undefined) {
     next();
     return;
   }
 
   // Generate CSRF token if not exists
-  if (!req.session.csrfToken) {
-    req.session.csrfToken = crypto.randomUUID();
-  }
+  req.session.csrfToken ??= crypto.randomUUID();
 
   // Make CSRF token available to templates
   res.locals.csrfToken = req.session.csrfToken;

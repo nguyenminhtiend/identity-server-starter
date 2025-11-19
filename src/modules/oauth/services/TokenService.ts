@@ -94,7 +94,7 @@ export class TokenService {
     };
 
     // Sign JWT with kid header
-    const jwt = await new jose.SignJWT(payload as any)
+    const jwt = await new jose.SignJWT(payload as jose.JWTPayload)
       .setProtectedHeader({
         alg: signingKey.algorithm,
         typ: 'JWT',
@@ -165,7 +165,7 @@ export class TokenService {
     }
 
     // Sign JWT with kid header
-    const jwt = await new jose.SignJWT(payload as any)
+    const jwt = await new jose.SignJWT(payload as jose.JWTPayload)
       .setProtectedHeader({
         alg: signingKey.algorithm,
         typ: 'JWT',
@@ -273,11 +273,12 @@ export class TokenService {
    */
   async extractClientId(token: string): Promise<string | null> {
     const result = await this.verifyToken(token);
-    if (!result.valid || !result.payload) {
+    if (!result.valid || result.payload === undefined) {
       return null;
     }
 
-    return (result.payload as any).client_id ?? null;
+    const payload = result.payload as { client_id?: string };
+    return payload.client_id ?? null;
   }
 
   /**
@@ -287,11 +288,12 @@ export class TokenService {
    */
   async extractScopes(token: string): Promise<string[]> {
     const result = await this.verifyToken(token);
-    if (!result.valid || !result.payload) {
+    if (!result.valid || result.payload === undefined) {
       return [];
     }
 
-    const scope = (result.payload as any).scope ?? '';
+    const payload = result.payload as { scope?: string };
+    const scope = payload.scope ?? '';
     return scope.split(' ').filter((s: string) => s.length > 0);
   }
 
@@ -313,11 +315,11 @@ export class TokenService {
    */
   async getUserInfo(token: string): Promise<Partial<UserInfo> | null> {
     const result = await this.verifyToken(token);
-    if (!result.valid || !result.payload) {
+    if (!result.valid || result.payload === undefined) {
       return null;
     }
 
-    const payload = result.payload as any;
+    const payload = result.payload as { sub?: string; email?: string; email_verified?: boolean };
 
     return {
       id: payload.sub,

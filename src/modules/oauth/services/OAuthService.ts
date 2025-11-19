@@ -472,7 +472,15 @@ export class OAuthService {
    * @param token - Refresh token string
    * @returns Refresh token data or null
    */
-  async getRefreshToken(token: string): Promise<any> {
+  async getRefreshToken(token: string): Promise<{
+    token: string;
+    client_id: string;
+    user_id: string;
+    scope: string;
+    expires_at: Date;
+    created_at: Date;
+    revoked: boolean;
+  } | null> {
     const tokenHash = sha256Hash(token);
 
     const [refreshToken] = await db

@@ -25,13 +25,13 @@ export function validate(schema: ZodSchema, options: ValidateOptions = {}) {
   return (req: Request, _res: Response, next: NextFunction): void => {
     try {
       // Get data from the specified target
-      const data = req[target];
+      const data = (req as Record<string, unknown>)[target];
 
       // Parse and validate data
       const parsed = stripUnknown ? schema.parse(data) : schema.parse(data);
 
       // Replace request data with validated data
-      (req as any)[target] = parsed;
+      (req as Record<string, unknown>)[target] = parsed;
 
       next();
     } catch (error) {
@@ -39,7 +39,7 @@ export function validate(schema: ZodSchema, options: ValidateOptions = {}) {
         // Format Zod errors into OAuth-friendly format
         const messages = error.issues.map((err) => {
           const path = err.path.join('.');
-          return path ? `${path}: ${err.message}` : err.message;
+          return path.length > 0 ? `${path}: ${err.message}` : err.message;
         });
 
         throw OAuthErrors.INVALID_REQUEST(messages.join(', '));
@@ -244,9 +244,9 @@ export const commonSchemas = {
 export function jsonStringSchema<T>(schema: ZodSchema<T>) {
   return z
     .string()
-    .transform((val) => {
+    .transform((val): unknown => {
       try {
-        return JSON.parse(val);
+        return JSON.parse(val) as unknown;
       } catch {
         throw new Error('Invalid JSON string');
       }
@@ -257,10 +257,10 @@ export function jsonStringSchema<T>(schema: ZodSchema<T>) {
 /**
  * Helper to create a schema for comma-separated string arrays
  */
-export function commaSeparatedString(itemSchema?: ZodSchema): any {
+export function commaSeparatedString(itemSchema?: ZodSchema): ZodSchema {
   const schema = itemSchema ?? z.string();
   return z
     .string()
     .transform((val) => val.split(',').map((item) => item.trim()))
-    .pipe(z.array(schema as any));
+    .pipe(z.array(schema));
 }

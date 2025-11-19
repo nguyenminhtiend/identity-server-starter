@@ -119,17 +119,18 @@ export class AuthorizeController {
    * Handle user consent decision
    */
   async consent(req: Request, res: Response): Promise<void> {
-    const {
-      client_id,
-      scope,
-      redirect_uri,
-      state,
-      code_challenge,
-      code_challenge_method,
-      allow,
-    } = req.body;
+    const { client_id, scope, redirect_uri, state, code_challenge, code_challenge_method, allow } =
+      req.body as {
+        client_id: string;
+        scope: string;
+        redirect_uri: string;
+        state?: string;
+        code_challenge: string;
+        code_challenge_method: string;
+        allow: string | boolean;
+      };
 
-    if (!req.session?.userId) {
+    if (req.session?.userId === undefined) {
       res.status(401).json({
         error: 'unauthorized',
         error_description: 'User not authenticated',
@@ -141,13 +142,7 @@ export class AuthorizeController {
 
     // User denied consent
     if (allow !== 'true' && allow !== true) {
-      this.redirectWithError(
-        res,
-        redirect_uri,
-        'access_denied',
-        'User denied the request',
-        state
-      );
+      this.redirectWithError(res, redirect_uri, 'access_denied', 'User denied the request', state);
       return;
     }
 
@@ -177,7 +172,7 @@ export class AuthorizeController {
     // Redirect back to client with code
     const redirectUrl = new URL(redirect_uri);
     redirectUrl.searchParams.set('code', code);
-    if (state) {
+    if (state !== undefined) {
       redirectUrl.searchParams.set('state', state);
     }
 

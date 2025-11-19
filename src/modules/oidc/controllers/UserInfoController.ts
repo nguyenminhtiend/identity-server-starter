@@ -3,6 +3,7 @@ import { TokenService } from '../../oauth/services/TokenService.js';
 import { config } from '../../../shared/config/index.js';
 import { db, users } from '../../../shared/database/index.js';
 import { eq } from 'drizzle-orm';
+import type { OAuthJWTPayload } from '../../../shared/types/oauth';
 
 /**
  * UserInfo Response according to OIDC spec
@@ -37,6 +38,7 @@ export class UserInfoController {
     // Extract Bearer token from Authorization header
     const authHeader = req.headers.authorization;
 
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     if (!authHeader?.startsWith('Bearer ')) {
       res.status(401).json({
         error: 'invalid_token',
@@ -58,7 +60,7 @@ export class UserInfoController {
       return;
     }
 
-    const payload = verificationResult.payload as any;
+    const payload = verificationResult.payload as OAuthJWTPayload;
 
     // Extract user ID and scopes from token
     const userId = payload.sub;
@@ -66,7 +68,7 @@ export class UserInfoController {
     const scopes = scope.split(' ');
 
     // Check if openid scope is present (required for UserInfo endpoint)
-    if (!scopes.includes('openid')) {
+    if (scopes.length === 0 || !scopes.includes('openid')) {
       res.status(403).json({
         error: 'insufficient_scope',
         error_description: 'The openid scope is required to access UserInfo endpoint',
@@ -77,7 +79,7 @@ export class UserInfoController {
     // Fetch user from database
     const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 
-    if (!user) {
+    if (user === undefined) {
       res.status(404).json({
         error: 'user_not_found',
         error_description: 'User not found',
@@ -91,7 +93,7 @@ export class UserInfoController {
     };
 
     // Add email claims if email scope is granted
-    if (scopes.includes('email')) {
+    if (scopes.length > 0 && scopes.includes('email')) {
       userInfo.email = user.email;
       userInfo.email_verified = user.emailVerified;
     }
@@ -99,15 +101,18 @@ export class UserInfoController {
     // Add profile claims if profile scope is granted
     // Note: Current schema doesn't have name/picture fields
     // This is a placeholder for when those fields are added
-    if (scopes.includes('profile')) {
+    if (scopes.length > 0 && scopes.includes('profile')) {
       // userInfo.name = user.name;
       // userInfo.given_name = user.givenName;
       // userInfo.family_name = user.familyName;
       // userInfo.picture = user.picture;
 
       // For now, we can derive a name from email
-      const emailLocalPart = user.email.split('@')[0];
-      userInfo.name = emailLocalPart;
+      const emailParts = user.email.split('@');
+      const emailLocalPart = emailParts[0];
+      if (emailLocalPart !== undefined) {
+        userInfo.name = emailLocalPart;
+      }
     }
 
     // Return UserInfo response

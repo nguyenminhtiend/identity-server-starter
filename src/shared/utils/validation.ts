@@ -64,7 +64,7 @@ export function validateBody<T extends z.ZodType>(schema: T) {
 export function validateQuery<T extends z.ZodType>(schema: T) {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      req.query = (await schema.parseAsync(req.query)) as any;
+      req.query = (await schema.parseAsync(req.query)) as z.infer<T>;
       next();
     } catch (error) {
       if (error instanceof ZodError) {
@@ -84,7 +84,7 @@ export function validateQuery<T extends z.ZodType>(schema: T) {
 export function validateParams<T extends z.ZodType>(schema: T) {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      req.params = (await schema.parseAsync(req.params)) as any;
+      req.params = (await schema.parseAsync(req.params)) as z.infer<T>;
       next();
     } catch (error) {
       if (error instanceof ZodError) {

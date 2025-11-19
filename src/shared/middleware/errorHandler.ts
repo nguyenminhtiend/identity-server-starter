@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
+import type { ZodValidationError, ErrorWithStatus } from '../types/oauth';
 
 /**
  * Custom error class for OAuth 2.0 errors
@@ -68,14 +69,15 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
 
   // Handle Zod validation errors
   if (err.name === 'ZodError') {
-    const zodError = err as any;
-    const messages = zodError.errors
-      ?.map((e: any) => `${e.path.join('.')}: ${e.message}`)
+    const zodError = err as { errors?: ZodValidationError[] };
+    const errors = zodError.errors ?? [];
+    const messages = errors
+      .map((e: ZodValidationError) => `${e.path.join('.')}: ${e.message}`)
       .join(', ');
 
     res.status(400).json({
       error: 'invalid_request',
-      error_description: messages || 'Validation failed',
+      error_description: messages.length > 0 ? messages : 'Validation failed',
     });
     return;
   }
@@ -90,7 +92,8 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
   }
 
   // Handle generic errors
-  const statusCode = (err as any).statusCode || 500;
+  const errorWithStatus = err as ErrorWithStatus;
+  const statusCode = errorWithStatus.statusCode ?? 500;
   const isDevelopment = process.env.NODE_ENV === 'development';
 
   res.status(statusCode).json({

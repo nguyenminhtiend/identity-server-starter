@@ -71,13 +71,14 @@ export function requireBearerToken(req: Request, _res: Response, _next: NextFunc
   // const _authReq = req as AuthenticatedRequest;
   const authHeader = req.headers.authorization;
 
+  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
   if (!authHeader?.startsWith('Bearer ')) {
     throw OAuthErrors.INVALID_REQUEST('Missing or invalid Authorization header');
   }
 
   const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 
-  if (!token) {
+  if (token.length === 0) {
     throw OAuthErrors.INVALID_REQUEST('Access token is required');
   }
 
@@ -117,6 +118,7 @@ export function requireClientAuth(req: Request, _res: Response, _next: NextFunct
 
   // Try to get credentials from Authorization header (Basic Auth)
   const authHeader = req.headers.authorization;
+  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
   if (authHeader?.startsWith('Basic ')) {
     const base64Credentials = authHeader.substring(6);
     const credentials = Buffer.from(base64Credentials, 'base64').toString('utf-8');
@@ -124,9 +126,7 @@ export function requireClientAuth(req: Request, _res: Response, _next: NextFunct
   }
 
   // Fall back to request body (client_secret_post)
-  if (!clientId) {
-    clientId = req.body.client_id;
-  }
+  clientId ??= (req.body as { client_id?: string }).client_id;
 
   if (!clientId) {
     throw OAuthErrors.INVALID_CLIENT('Client authentication required');

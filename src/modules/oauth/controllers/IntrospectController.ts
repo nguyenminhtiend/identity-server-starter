@@ -2,6 +2,7 @@ import { type Request, type Response } from 'express';
 import { z } from 'zod';
 import { type OAuthService } from '../services/OAuthService';
 import { type TokenService } from '../services/TokenService';
+import type { OAuthJWTPayload, RefreshTokenData } from '../../../shared/types/oauth';
 
 const introspectSchema = z.object({
   token: z.string().min(1),
@@ -98,9 +99,11 @@ export class IntrospectController {
     token: string,
     clientId: string
   ): Promise<Record<string, unknown> | null> {
-    const refreshTokenData = await this.oauthService.getRefreshToken(token);
+    const refreshTokenData = (await this.oauthService.getRefreshToken(
+      token
+    )) as RefreshTokenData | null;
 
-    if (!refreshTokenData) {
+    if (refreshTokenData === null) {
       return null;
     }
 
@@ -110,7 +113,7 @@ export class IntrospectController {
     }
 
     // Check if token is revoked
-    if (refreshTokenData.revoked) {
+    if (refreshTokenData.revoked === true) {
       return {
         active: false,
       };
@@ -143,11 +146,11 @@ export class IntrospectController {
     try {
       const result = await this.tokenService.verifyToken(token);
 
-      if (!result.valid || !result.payload) {
+      if (!result.valid || result.payload === undefined) {
         return null;
       }
 
-      const payload = result.payload as any;
+      const payload = result.payload as OAuthJWTPayload;
 
       // Token is valid
       return {
