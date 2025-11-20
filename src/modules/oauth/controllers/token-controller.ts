@@ -38,7 +38,7 @@ export class TokenController {
    * OAuth 2.0 Token Endpoint
    * Supports: authorization_code, refresh_token, client_credentials
    */
-  async token(req: Request, res: Response): Promise<void> {
+  token = async (req: Request, res: Response): Promise<void> => {
     const { grant_type } = req.body as { grant_type: string };
 
     switch (grant_type) {
@@ -55,7 +55,7 @@ export class TokenController {
         });
         return;
     }
-  }
+  };
 
   /**
    * Handle authorization_code grant type

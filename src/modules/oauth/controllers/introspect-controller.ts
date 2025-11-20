@@ -22,7 +22,7 @@ export class IntrospectController {
    * OAuth 2.0 Token Introspection Endpoint (RFC 7662)
    * Returns metadata about a token
    */
-  async introspect(req: Request, res: Response): Promise<void> {
+  introspect = async (req: Request, res: Response): Promise<void> => {
     const params = introspectSchema.parse(req.body);
 
     // Validate client
@@ -90,7 +90,7 @@ export class IntrospectController {
 
     // Token is invalid or not found
     res.json({ active: false });
-  }
+  };
 
   /**
    * Introspect a refresh token

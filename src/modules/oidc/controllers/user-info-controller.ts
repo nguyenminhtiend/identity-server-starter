@@ -33,7 +33,7 @@ export class UserInfoController {
    * Returns user claims based on the access token and granted scopes
    * Requires a valid Bearer token in the Authorization header
    */
-  async getUserInfo(req: Request, res: Response): Promise<void> {
+  getUserInfo = async (req: Request, res: Response): Promise<void> => {
     // Extract Bearer token from Authorization header
     const authHeader = req.headers.authorization;
 
@@ -116,5 +116,5 @@ export class UserInfoController {
 
     // Return UserInfo response
     res.json(userInfo);
-  }
+  };
 }

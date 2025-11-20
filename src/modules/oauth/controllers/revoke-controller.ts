@@ -16,7 +16,7 @@ export class RevokeController {
    * POST /oauth/revoke
    * OAuth 2.0 Token Revocation Endpoint (RFC 7009)
    */
-  async revoke(req: Request, res: Response): Promise<void> {
+  revoke = async (req: Request, res: Response): Promise<void> => {
     const params = revokeSchema.parse(req.body);
 
     // Validate client
@@ -60,5 +60,5 @@ export class RevokeController {
 
     // Return 200 OK with empty body (per RFC 7009)
     res.status(200).end();
-  }
+  };
 }

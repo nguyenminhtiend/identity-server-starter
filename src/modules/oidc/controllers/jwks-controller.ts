@@ -17,7 +17,7 @@ export class JWKSController {
    * Returns the JSON Web Key Set containing all active public keys
    * This endpoint is used by clients to verify JWT signatures
    */
-  async getJWKS(_req: Request, res: Response): Promise<void> {
+  getJWKS = async (_req: Request, res: Response): Promise<void> => {
     // Get all active public keys from KeyManagementService
     const publicKeys = await this.keyManagementService.getPublicKeys();
 
@@ -25,5 +25,5 @@ export class JWKSController {
     res.json({
       keys: publicKeys,
     });
-  }
+  };
 }

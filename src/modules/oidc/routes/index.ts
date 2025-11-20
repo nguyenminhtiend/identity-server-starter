@@ -27,14 +27,11 @@ const router: RouterType = Router();
 
 // OpenID Connect Discovery Document
 // GET /.well-known/openid-configuration
-router.get(
-  '/.well-known/openid-configuration',
-  discoveryController.getDiscoveryDocument.bind(discoveryController)
-);
+router.get('/.well-known/openid-configuration', discoveryController.getDiscoveryDocument);
 
 // JSON Web Key Set (JWKS)
 // GET /.well-known/jwks.json
-router.get('/.well-known/jwks.json', jwksController.getJWKS.bind(jwksController));
+router.get('/.well-known/jwks.json', jwksController.getJWKS);
 
 /**
  * OIDC UserInfo Endpoint
@@ -42,6 +39,6 @@ router.get('/.well-known/jwks.json', jwksController.getJWKS.bind(jwksController)
 
 // UserInfo endpoint (requires Bearer token)
 // GET /oauth/userinfo
-router.get('/oauth/userinfo', userInfoController.getUserInfo.bind(userInfoController));
+router.get('/oauth/userinfo', userInfoController.getUserInfo);
 
 export default router;

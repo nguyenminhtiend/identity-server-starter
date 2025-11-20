@@ -23,13 +23,13 @@ const router: RouterType = Router();
  * OAuth 2.0 Authorization Endpoint
  * GET /oauth/authorize
  */
-router.get('/authorize', (req, res) => authorizeController.authorize(req, res));
+router.get('/authorize', authorizeController.authorize);
 
 /**
  * OAuth 2.0 Consent Endpoint
  * POST /oauth/consent
  */
-router.post('/consent', (req, res) => authorizeController.consent(req, res));
+router.post('/consent', authorizeController.consent);
 
 /**
  * OAuth 2.0 Token Endpoint
@@ -40,18 +40,18 @@ router.post('/consent', (req, res) => authorizeController.consent(req, res));
  * - refresh_token
  * - client_credentials
  */
-router.post('/token', (req, res) => tokenController.token(req, res));
+router.post('/token', tokenController.token);
 
 /**
  * OAuth 2.0 Token Revocation Endpoint (RFC 7009)
  * POST /oauth/revoke
  */
-router.post('/revoke', (req, res) => revokeController.revoke(req, res));
+router.post('/revoke', revokeController.revoke);
 
 /**
  * OAuth 2.0 Token Introspection Endpoint (RFC 7662)
  * POST /oauth/introspect
  */
-router.post('/introspect', (req, res) => introspectController.introspect(req, res));
+router.post('/introspect', introspectController.introspect);
 
 export default router;

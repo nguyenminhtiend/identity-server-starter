@@ -461,7 +461,19 @@ export class OAuthService implements IOAuthService {
       .where(eq(refreshTokens.tokenHash, tokenHash))
       .limit(1);
 
-    return refreshToken ?? null;
+    if (!refreshToken) {
+      return null;
+    }
+
+    return {
+      token,
+      client_id: refreshToken.clientId,
+      user_id: refreshToken.userId,
+      scope: refreshToken.scope,
+      expires_at: refreshToken.expiresAt,
+      created_at: refreshToken.createdAt,
+      revoked: refreshToken.revoked,
+    };
   }
 
   /**

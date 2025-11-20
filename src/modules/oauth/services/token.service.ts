@@ -15,6 +15,7 @@ export interface TokenPayload {
   client_id: string; // Client ID
   email?: string; // User email (optional)
   email_verified?: boolean; // Email verification status (optional)
+  [key: string]: unknown; // Index signature for JWTPayload compatibility
 }
 
 /**

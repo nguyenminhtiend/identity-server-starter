@@ -19,7 +19,7 @@ export class AuthorizeController {
    * GET /oauth/authorize
    * OAuth 2.0 Authorization Endpoint with PKCE
    */
-  async authorize(req: Request, res: Response): Promise<void> {
+  authorize = async (req: Request, res: Response): Promise<void> => {
     // Validate query parameters
     const params = authorizeSchema.parse(req.query);
 
@@ -112,13 +112,13 @@ export class AuthorizeController {
     }
 
     res.redirect(redirectUrl.toString());
-  }
+  };
 
   /**
    * POST /oauth/consent
    * Handle user consent decision
    */
-  async consent(req: Request, res: Response): Promise<void> {
+  consent = async (req: Request, res: Response): Promise<void> => {
     const { client_id, scope, redirect_uri, state, code_challenge, code_challenge_method, allow } =
       req.body as {
         client_id: string;
@@ -177,7 +177,7 @@ export class AuthorizeController {
     }
 
     res.redirect(redirectUrl.toString());
-  }
+  };
 
   /**
    * Helper method to redirect with OAuth error

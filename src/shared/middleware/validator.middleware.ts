@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { z, type ZodTypeAny, ZodError } from 'zod';
+import { z, type ZodType, ZodError } from 'zod';
 import { OAuthErrors } from './error-handler.middleware.js';
 
 /**
@@ -19,19 +19,19 @@ interface ValidateOptions {
  * Generic validation middleware factory
  * Validates request data against a Zod schema
  */
-export function validate(schema: ZodTypeAny, options: ValidateOptions = {}) {
+export function validate(schema: ZodType, options: ValidateOptions = {}) {
   const { target = 'body', stripUnknown = true } = options;
 
   return (req: Request, _res: Response, next: NextFunction): void => {
     try {
       // Get data from the specified target
-      const data = (req as Record<string, unknown>)[target];
+      const data = (req as unknown as Record<string, unknown>)[target];
 
       // Parse and validate data
       const parsed = stripUnknown ? schema.parse(data) : schema.parse(data);
 
       // Replace request data with validated data
-      (req as Record<string, unknown>)[target] = parsed;
+      (req as unknown as Record<string, unknown>)[target] = parsed;
 
       next();
     } catch (error) {
@@ -54,28 +54,28 @@ export function validate(schema: ZodTypeAny, options: ValidateOptions = {}) {
 /**
  * Validate request body
  */
-export function validateBody(schema: ZodTypeAny) {
+export function validateBody(schema: ZodType) {
   return validate(schema, { target: 'body' });
 }
 
 /**
  * Validate query parameters
  */
-export function validateQuery(schema: ZodTypeAny) {
+export function validateQuery(schema: ZodType) {
   return validate(schema, { target: 'query' });
 }
 
 /**
  * Validate URL parameters
  */
-export function validateParams(schema: ZodTypeAny) {
+export function validateParams(schema: ZodType) {
   return validate(schema, { target: 'params' });
 }
 
 /**
  * Validate request headers
  */
-export function validateHeaders(schema: ZodTypeAny) {
+export function validateHeaders(schema: ZodType) {
   return validate(schema, { target: 'headers', stripUnknown: false });
 }
 
@@ -254,10 +254,11 @@ export function jsonStringSchema<T>(schema: z.ZodType<T>) {
 /**
  * Helper to create a schema for comma-separated string arrays
  */
-export function commaSeparatedString(itemSchema?: ZodTypeAny): ZodTypeAny {
+export function commaSeparatedString(itemSchema?: ZodType) {
   const schema = itemSchema ?? z.string();
+
   return z
     .string()
     .transform((val) => val.split(',').map((item) => item.trim()))
-    .pipe(z.array(schema));
+    .pipe(z.array(schema) as any);
 }
