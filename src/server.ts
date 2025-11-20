@@ -6,7 +6,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { config } from './shared/config';
 import { errorHandler, helmetConfig, devCorsMiddleware } from './shared/middleware';
-import { configureDIContainer } from './shared/di';
+import { createServices } from './shared/services';
+import { createOAuthRouter } from './modules/oauth/routes';
+import { createOIDCRouter } from './modules/oidc/routes';
 import { logger } from './shared/utils';
 
 // Get __dirname equivalent in ES modules
@@ -14,14 +16,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function createServer(): Promise<Application> {
-  // Initialize DI container before anything else
-  configureDIContainer();
-  logger.info('✅ DI Container configured');
+  // Create all services with explicit dependency injection
+  const services = createServices();
 
-  // Import routes AFTER DI container is configured
-  // This ensures services are available when routes initialize
-  const { default: oauthRoutes } = await import('./modules/oauth/routes');
-  const { default: oidcRoutes } = await import('./modules/oidc/routes');
+  // Initialize KeyManagementService (load keys from database)
+  await services.keyManagementService.initialize();
+  logger.info('✅ Services initialized');
 
   const app = express();
 
@@ -78,10 +78,10 @@ async function createServer(): Promise<Application> {
   });
 
   // Mount OAuth routes
-  app.use('/oauth', oauthRoutes);
+  app.use('/oauth', createOAuthRouter(services));
 
   // Mount OIDC routes (discovery and UserInfo)
-  app.use(oidcRoutes);
+  app.use(createOIDCRouter(services));
 
   // TODO: Mount other routes
   // app.use('/login', authRoutes);

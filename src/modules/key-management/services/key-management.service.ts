@@ -53,29 +53,14 @@ interface DecryptedKeyPair {
  * - Caches keys in memory for performance
  */
 export class KeyManagementService {
-  private static instance: KeyManagementService;
   private encryptionSecret: string;
   private cachedKeys = new Map<string, DecryptedKeyPair>();
   private primaryKeyId: string | null = null;
   private lastRefresh: Date = new Date(0);
   private readonly CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
-  private constructor(encryptionSecret: string) {
+  constructor(encryptionSecret: string) {
     this.encryptionSecret = encryptionSecret;
-  }
-
-  /**
-   * Get singleton instance
-   * @param encryptionSecret - Master key for encrypting/decrypting private keys
-   */
-  static getInstance(encryptionSecret?: string): KeyManagementService {
-    if (KeyManagementService.instance === undefined) {
-      if (!encryptionSecret) {
-        throw new Error('Encryption secret is required for first initialization');
-      }
-      KeyManagementService.instance = new KeyManagementService(encryptionSecret);
-    }
-    return KeyManagementService.instance;
   }
 
   /**
