@@ -8,7 +8,7 @@ export default defineConfig({
   out: './src/shared/database/migrations',
   dialect: 'postgresql',
   dbCredentials: {
-    url: process.env.DATABASE_URL || 'postgresql://admin:123456@127.0.0.1:5432/identity_db',
+    url: process.env.DATABASE_URL!,
   },
   verbose: true,
   strict: true,

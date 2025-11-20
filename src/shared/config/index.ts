@@ -14,6 +14,21 @@ const configSchema = z.object({
 
   // Database
   DATABASE_URL: z.url(),
+  DB_POOL_MAX: z
+    .string()
+    .transform(Number)
+    .pipe(z.number().positive())
+    .default(() => 10),
+  DB_POOL_IDLE_TIMEOUT: z
+    .string()
+    .transform(Number)
+    .pipe(z.number().positive())
+    .default(() => 20),
+  DB_POOL_CONNECT_TIMEOUT: z
+    .string()
+    .transform(Number)
+    .pipe(z.number().positive())
+    .default(() => 10),
 
   // Redis
   REDIS_URL: z.url(),
@@ -99,6 +114,11 @@ export const config = {
 
   database: {
     url: rawConfig.DATABASE_URL,
+    pool: {
+      max: rawConfig.DB_POOL_MAX,
+      idleTimeout: rawConfig.DB_POOL_IDLE_TIMEOUT,
+      connectTimeout: rawConfig.DB_POOL_CONNECT_TIMEOUT,
+    },
   },
 
   redis: {

@@ -1,16 +1,16 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
+import { config } from '../config/index.js';
 import * as schema from './schema.model.js';
 
-// Get DATABASE_URL from environment
-const connectionString =
-  process.env.DATABASE_URL ?? 'postgresql://admin:123456@127.0.0.1:5432/identity_db';
+// Get DATABASE_URL from config (will throw error if not set)
+const connectionString = config.database.url;
 
-// Create postgres client
+// Create postgres client with configurable pool settings
 const client = postgres(connectionString, {
-  max: 10,
-  idle_timeout: 20,
-  connect_timeout: 10,
+  max: config.database.pool.max,
+  idle_timeout: config.database.pool.idleTimeout,
+  connect_timeout: config.database.pool.connectTimeout,
 });
 
 // Create drizzle instance with schema
