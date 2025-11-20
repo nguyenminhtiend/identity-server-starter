@@ -51,7 +51,10 @@ async function seed() {
       logger.info(`   Password: Test123456!\n`);
     } else {
       testUser = existingUsers[0];
-      logger.info(`   ✓ Test user already exists: ${testUser!.email}\n`);
+      if (!testUser) {
+        throw new Error('Failed to retrieve existing test user');
+      }
+      logger.info(`   ✓ Test user already exists: ${testUser.email}\n`);
     }
 
     // 3. Create test organization (if multi-tenant enabled)
@@ -70,7 +73,7 @@ async function seed() {
           .values({
             name: 'Test Organization',
             slug: 'test-org',
-            ownerUserId: testUser!.id,
+            ownerUserId: testUser.id,
             isActive: true,
           })
           .returning();
@@ -83,7 +86,10 @@ async function seed() {
         logger.info(`   ✓ Organization created: ${testOrganization.name}\n`);
       } else {
         testOrganization = existingOrgs[0];
-        logger.info(`   ✓ Organization already exists: ${testOrganization!.name}\n`);
+        if (!testOrganization) {
+          throw new Error('Failed to retrieve existing test organization');
+        }
+        logger.info(`   ✓ Organization already exists: ${testOrganization.name}\n`);
       }
     } else {
       logger.info('3️⃣  Multi-tenant disabled, skipping organization creation\n');
@@ -126,8 +132,11 @@ async function seed() {
         .returning();
 
       confidentialClient = newClient;
+      if (!confidentialClient) {
+        throw new Error('Failed to create confidential client');
+      }
       logger.info('   ✓ Confidential Client (Backend Web App):');
-      logger.info(`     Client ID: ${confidentialClient!.clientId}`);
+      logger.info(`     Client ID: ${confidentialClient.clientId}`);
       logger.info(`     Client Secret: ${confidentialClientSecret}`);
       logger.info(`     Grant Types: authorization_code, refresh_token, client_credentials\n`);
     } else {
@@ -165,8 +174,11 @@ async function seed() {
         .returning();
 
       publicSpaClient = newClient;
+      if (!publicSpaClient) {
+        throw new Error('Failed to create public SPA client');
+      }
       logger.info('   ✓ Public Client (SPA):');
-      logger.info(`     Client ID: ${publicSpaClient!.clientId}`);
+      logger.info(`     Client ID: ${publicSpaClient.clientId}`);
       logger.info(`     No client secret (public client, uses PKCE)`);
       logger.info(`     Grant Types: authorization_code, refresh_token`);
       logger.info(`     CORS Origins: http://localhost:5173, http://localhost:3000\n`);
@@ -205,8 +217,11 @@ async function seed() {
         .returning();
 
       mobileClient = newClient;
+      if (!mobileClient) {
+        throw new Error('Failed to create mobile client');
+      }
       logger.info('   ✓ Public Client (Mobile App):');
-      logger.info(`     Client ID: ${mobileClient!.clientId}`);
+      logger.info(`     Client ID: ${mobileClient.clientId}`);
       logger.info(`     No client secret (public client, uses PKCE)`);
       logger.info(`     Grant Types: authorization_code, refresh_token`);
       logger.info(`     Redirect URIs: myapp://callback, com.example.myapp://callback\n`);
@@ -218,7 +233,10 @@ async function seed() {
     // Summary
     logger.info('✅ Database seeding completed!\n');
     logger.info('📝 Summary:');
-    logger.info(`   • Test User: ${testUser!.email} / Test123456!`);
+    if (testUser === undefined || testUser === null) {
+      throw new Error('Test user is undefined at summary stage');
+    }
+    logger.info(`   • Test User: ${testUser.email} / Test123456!`);
     if (testOrganization) {
       logger.info(`   • Organization: ${testOrganization.name} (${testOrganization.slug})`);
     }

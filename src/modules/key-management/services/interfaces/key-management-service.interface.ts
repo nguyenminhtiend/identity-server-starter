@@ -14,10 +14,42 @@ export interface PublicKeyJWK {
  * Decrypted key pair for signing
  */
 export interface DecryptedKeyPair {
+  id: string;
   keyId: string;
   publicKey: string;
   privateKey: string;
   algorithm: string;
+  isActive: boolean;
+  isPrimary: boolean;
+  createdAt: Date;
+  nextRotationAt: Date | null;
+  publicKeyPem: string;
+}
+
+/**
+ * Key metadata for admin endpoints
+ */
+export interface KeyMetadata {
+  id: string;
+  keyId: string;
+  algorithm: string;
+  isActive: boolean;
+  isPrimary: boolean;
+  createdAt: Date;
+  expiresAt: Date | null;
+  rotatedAt: Date | null;
+  nextRotationAt: Date | null;
+  publicKeyPem: string;
+}
+
+/**
+ * Key rotation status
+ */
+export interface RotationStatus {
+  currentPrimaryKeyId: string;
+  nextRotationAt: Date | null;
+  activeKeysCount: number;
+  rotationIntervalDays: number;
 }
 
 /**
@@ -48,4 +80,21 @@ export interface IKeyManagementService {
    * @returns Decrypted key pair or null if not found
    */
   getKeyById(keyId: string): Promise<DecryptedKeyPair | null>;
+
+  /**
+   * List all keys (for admin endpoints)
+   * @returns Array of key metadata
+   */
+  listAllKeys(): Promise<KeyMetadata[]>;
+
+  /**
+   * Manually trigger key rotation
+   */
+  rotateKeys(): Promise<void>;
+
+  /**
+   * Get rotation status
+   * @returns Current rotation status
+   */
+  getRotationStatus(): Promise<RotationStatus>;
 }

@@ -254,11 +254,15 @@ export function jsonStringSchema<T>(schema: z.ZodType<T>) {
 /**
  * Helper to create a schema for comma-separated string arrays
  */
-export function commaSeparatedString(itemSchema?: ZodType) {
-  const schema = itemSchema ?? z.string();
+export function commaSeparatedString(): z.ZodType<string[]>;
+export function commaSeparatedString<T>(itemSchema: ZodType<T>): z.ZodType<T[]>;
+export function commaSeparatedString<T>(itemSchema?: ZodType<T>) {
+  if (itemSchema) {
+    return z
+      .string()
+      .transform((val) => val.split(',').map((item) => item.trim()) as unknown[])
+      .pipe(z.array(itemSchema));
+  }
 
-  return z
-    .string()
-    .transform((val) => val.split(',').map((item) => item.trim()))
-    .pipe(z.array(schema) as any);
+  return z.string().transform((val) => val.split(',').map((item) => item.trim()));
 }

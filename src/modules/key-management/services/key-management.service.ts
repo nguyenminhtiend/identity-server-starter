@@ -4,6 +4,7 @@ import type * as jose from 'jose';
 import { db, signingKeys } from '../../../shared/database';
 import { encryptAES, decryptAES, generateRSAKeyPair } from '../../../shared/utils/crypto.util.js';
 import { logger } from '../../../shared/utils/logger.util.js';
+import type { DecryptedKeyPair } from './interfaces/key-management-service.interface.js';
 
 /**
  * Signing Key interface (from database)
@@ -35,9 +36,9 @@ export interface PublicKeyJWK {
 }
 
 /**
- * Decrypted key pair for signing
+ * Decrypted key pair for signing (internal type)
  */
-interface DecryptedKeyPair {
+interface InternalDecryptedKeyPair {
   keyId: string;
   publicKey: string;
   privateKey: string;
@@ -54,7 +55,7 @@ interface DecryptedKeyPair {
  */
 export class KeyManagementService {
   private encryptionSecret: string;
-  private cachedKeys = new Map<string, DecryptedKeyPair>();
+  private cachedKeys = new Map<string, InternalDecryptedKeyPair>();
   private primaryKeyId: string | null = null;
   private lastRefresh: Date = new Date(0);
   private readonly CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
@@ -138,7 +139,29 @@ export class KeyManagementService {
       throw new Error('Primary signing key not found in cache');
     }
 
-    return key;
+    // Get full key info from database
+    const [dbKey] = await db
+      .select()
+      .from(signingKeys)
+      .where(eq(signingKeys.keyId, this.primaryKeyId))
+      .limit(1);
+
+    if (!dbKey) {
+      throw new Error('Primary signing key not found in database');
+    }
+
+    return {
+      id: dbKey.id,
+      keyId: key.keyId,
+      publicKey: key.publicKey,
+      privateKey: key.privateKey,
+      algorithm: key.algorithm,
+      isActive: dbKey.isActive,
+      isPrimary: dbKey.isPrimary,
+      createdAt: dbKey.createdAt,
+      nextRotationAt: dbKey.nextRotationAt,
+      publicKeyPem: dbKey.publicKeyPem,
+    };
   }
 
   /**
@@ -185,7 +208,34 @@ export class KeyManagementService {
    */
   async getKeyById(keyId: string): Promise<DecryptedKeyPair | null> {
     await this.refreshKeys();
-    return this.cachedKeys.get(keyId) ?? null;
+    const key = this.cachedKeys.get(keyId);
+    if (!key) {
+      return null;
+    }
+
+    // Get full key info from database
+    const [dbKey] = await db
+      .select()
+      .from(signingKeys)
+      .where(eq(signingKeys.keyId, keyId))
+      .limit(1);
+
+    if (!dbKey) {
+      return null;
+    }
+
+    return {
+      id: dbKey.id,
+      keyId: key.keyId,
+      publicKey: key.publicKey,
+      privateKey: key.privateKey,
+      algorithm: key.algorithm,
+      isActive: dbKey.isActive,
+      isPrimary: dbKey.isPrimary,
+      createdAt: dbKey.createdAt,
+      nextRotationAt: dbKey.nextRotationAt,
+      publicKeyPem: dbKey.publicKeyPem,
+    };
   }
 
   /**
@@ -276,9 +326,8 @@ export class KeyManagementService {
 
   /**
    * Rotate keys: create new primary key and mark old primary as non-primary
-   * @returns The new primary key
    */
-  async rotateKeys(): Promise<SigningKey> {
+  async rotateKeys(): Promise<void> {
     logger.info('Starting key rotation...');
 
     // Get current primary key
@@ -311,7 +360,6 @@ export class KeyManagementService {
     this.lastRefresh = new Date(0);
 
     logger.info('Key rotation completed');
-    return newPrimaryKey;
   }
 
   /**
@@ -354,5 +402,43 @@ export class KeyManagementService {
    */
   async getAllKeys(): Promise<SigningKey[]> {
     return db.select().from(signingKeys).orderBy(desc(signingKeys.createdAt));
+  }
+
+  /**
+   * List all keys (for admin endpoints)
+   * @returns Array of key metadata
+   */
+  async listAllKeys(): Promise<SigningKey[]> {
+    return this.getAllKeys();
+  }
+
+  /**
+   * Get rotation status
+   * @returns Current rotation status
+   */
+  async getRotationStatus(): Promise<{
+    currentPrimaryKeyId: string;
+    nextRotationAt: Date | null;
+    activeKeysCount: number;
+    rotationIntervalDays: number;
+  }> {
+    const [primaryKey] = await db
+      .select()
+      .from(signingKeys)
+      .where(and(eq(signingKeys.isPrimary, true), eq(signingKeys.isActive, true)))
+      .limit(1);
+
+    if (!primaryKey) {
+      throw new Error('No primary signing key found');
+    }
+
+    const activeKeys = await db.select().from(signingKeys).where(eq(signingKeys.isActive, true));
+
+    return {
+      currentPrimaryKeyId: primaryKey.keyId,
+      nextRotationAt: primaryKey.nextRotationAt,
+      activeKeysCount: activeKeys.length,
+      rotationIntervalDays: 90, // TODO: Make this configurable via env vars
+    };
   }
 }

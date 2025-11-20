@@ -2,6 +2,9 @@ import { config } from './config';
 import { KeyManagementService } from '../modules/key-management/services';
 import { TokenService, OAuthService } from '../modules/oauth/services';
 import { OIDCService } from '../modules/oidc/services';
+import { UserService, type IUserService } from '../modules/user/services';
+import { ClientService, type IClientService } from '../modules/client/services';
+import { OrganizationService, type IOrganizationService } from '../modules/organization/services';
 import type { IKeyManagementService } from '../modules/key-management/services/interfaces';
 import type { ITokenService, IOAuthService } from '../modules/oauth/services/interfaces';
 
@@ -14,6 +17,9 @@ export interface Services {
   tokenService: ITokenService;
   oauthService: IOAuthService;
   oidcService: OIDCService;
+  userService: IUserService;
+  clientService: IClientService;
+  organizationService: IOrganizationService;
 }
 
 /**
@@ -33,10 +39,22 @@ export function createServices(): Services {
   // Create OIDCService (no dependencies)
   const oidcService = new OIDCService();
 
+  // Create UserService (no dependencies)
+  const userService = new UserService();
+
+  // Create ClientService (no dependencies)
+  const clientService = new ClientService();
+
+  // Create OrganizationService (no dependencies)
+  const organizationService = new OrganizationService();
+
   return {
     keyManagementService,
     tokenService,
     oauthService,
     oidcService,
+    userService,
+    clientService,
+    organizationService,
   };
 }

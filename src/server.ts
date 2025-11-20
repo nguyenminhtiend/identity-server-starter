@@ -9,6 +9,8 @@ import { errorHandler, helmetConfig, devCorsMiddleware } from './shared/middlewa
 import { createServices } from './shared/services';
 import { createOAuthRouter } from './modules/oauth/routes';
 import { createOIDCRouter } from './modules/oidc/routes';
+import { createAuthRouter } from './modules/auth/routes';
+import { createAdminRouter } from './modules/admin/routes';
 import { logger } from './shared/utils';
 
 // Get __dirname equivalent in ES modules
@@ -77,15 +79,17 @@ async function createServer(): Promise<Application> {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
+  // Mount Auth routes (login, register, logout)
+  app.use(createAuthRouter(services));
+
   // Mount OAuth routes
   app.use('/oauth', createOAuthRouter(services));
 
   // Mount OIDC routes (discovery and UserInfo)
   app.use(createOIDCRouter(services));
 
-  // TODO: Mount other routes
-  // app.use('/login', authRoutes);
-  // app.use('/admin', adminRoutes);
+  // Mount Admin routes
+  app.use('/admin', createAdminRouter(services));
 
   // 404 handler
   app.use((req, res) => {
