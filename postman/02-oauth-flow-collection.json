@@ -1,0 +1,502 @@
+{
+  "info": {
+    "name": "02 - OAuth 2.0 & OIDC Flows",
+    "description": "Complete OAuth 2.0 and OpenID Connect flows including authorization code with PKCE, token exchange, refresh, and introspection.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "02.1 - OIDC Discovery",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/.well-known/openid-configuration",
+          "host": ["{{baseUrl}}"],
+          "path": [".well-known", "openid-configuration"]
+        },
+        "description": "Get OpenID Connect Discovery Document with server metadata and endpoint URLs."
+      },
+      "response": []
+    },
+    {
+      "name": "02.2 - Get JWKS (Public Keys)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/.well-known/jwks.json",
+          "host": ["{{baseUrl}}"],
+          "path": [".well-known", "jwks.json"]
+        },
+        "description": "Get JSON Web Key Set for verifying JWT signatures."
+      },
+      "response": []
+    },
+    {
+      "name": "02.3 - Generate PKCE Code Verifier & Challenge",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Generate code verifier (43-128 characters, base64url)",
+              "function base64URLEncode(str) {",
+              "    return str.toString(CryptoJS.enc.Base64)",
+              "        .replace(/\\+/g, '-')",
+              "        .replace(/\\//g, '_')",
+              "        .replace(/=/g, '');",
+              "}",
+              "",
+              "function generateCodeVerifier() {",
+              "    const array = CryptoJS.lib.WordArray.random(32);",
+              "    return base64URLEncode(array);",
+              "}",
+              "",
+              "function generateCodeChallenge(verifier) {",
+              "    return base64URLEncode(CryptoJS.SHA256(verifier));",
+              "}",
+              "",
+              "const verifier = generateCodeVerifier();",
+              "const challenge = generateCodeChallenge(verifier);",
+              "",
+              "pm.environment.set('codeVerifier', verifier);",
+              "pm.environment.set('codeChallenge', challenge);",
+              "",
+              "console.log('Code Verifier:', verifier);",
+              "console.log('Code Challenge:', challenge);"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('PKCE codes generated', function() {",
+              "    pm.expect(pm.environment.get('codeVerifier')).to.not.be.empty;",
+              "    pm.expect(pm.environment.get('codeChallenge')).to.not.be.empty;",
+              "    console.log('PKCE codes ready for authorization flow');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        },
+        "description": "This request generates PKCE code_verifier and code_challenge in the pre-request script. Run this before starting the authorization flow."
+      },
+      "response": []
+    },
+    {
+      "name": "02.4 - Start Authorization Flow (Browser Required)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/oauth/authorize?client_id={{clientId}}&redirect_uri=http://localhost:4000/callback&response_type=code&scope=openid email profile&state=random_state_123&code_challenge={{codeChallenge}}&code_challenge_method=S256",
+          "host": ["{{baseUrl}}"],
+          "path": ["oauth", "authorize"],
+          "query": [
+            {
+              "key": "client_id",
+              "value": "{{clientId}}"
+            },
+            {
+              "key": "redirect_uri",
+              "value": "http://localhost:4000/callback"
+            },
+            {
+              "key": "response_type",
+              "value": "code"
+            },
+            {
+              "key": "scope",
+              "value": "openid email profile"
+            },
+            {
+              "key": "state",
+              "value": "random_state_123"
+            },
+            {
+              "key": "code_challenge",
+              "value": "{{codeChallenge}}"
+            },
+            {
+              "key": "code_challenge_method",
+              "value": "S256"
+            }
+          ]
+        },
+        "description": "MANUAL STEP: Open this URL in a browser. You will be redirected to login (if not logged in), then to consent page. After consent, you'll be redirected to the callback URL with an authorization code. Copy the 'code' parameter from the URL and save it to the 'authorizationCode' environment variable.\n\nExample callback: http://localhost:4000/callback?code=AUTH_CODE_HERE&state=random_state_123\n\nCopy AUTH_CODE_HERE to the authorizationCode variable."
+      },
+      "response": []
+    },
+    {
+      "name": "02.5 - Exchange Authorization Code for Tokens",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const response = pm.response.json();",
+              "",
+              "if (response.access_token) {",
+              "    pm.environment.set('accessToken', response.access_token);",
+              "    console.log('Access Token saved');",
+              "}",
+              "",
+              "if (response.refresh_token) {",
+              "    pm.environment.set('refreshToken', response.refresh_token);",
+              "    console.log('Refresh Token saved');",
+              "}",
+              "",
+              "pm.test('Token exchange successful', function() {",
+              "    pm.response.to.have.status(200);",
+              "    pm.expect(response).to.have.property('access_token');",
+              "    pm.expect(response).to.have.property('token_type', 'Bearer');",
+              "    pm.expect(response).to.have.property('expires_in');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "grant_type",
+              "value": "authorization_code",
+              "type": "text"
+            },
+            {
+              "key": "code",
+              "value": "{{authorizationCode}}",
+              "type": "text"
+            },
+            {
+              "key": "redirect_uri",
+              "value": "http://localhost:4000/callback",
+              "type": "text"
+            },
+            {
+              "key": "client_id",
+              "value": "{{clientId}}",
+              "type": "text"
+            },
+            {
+              "key": "client_secret",
+              "value": "{{clientSecret}}",
+              "type": "text"
+            },
+            {
+              "key": "code_verifier",
+              "value": "{{codeVerifier}}",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/oauth/token",
+          "host": ["{{baseUrl}}"],
+          "path": ["oauth", "token"]
+        },
+        "description": "Exchange the authorization code for access and refresh tokens using PKCE."
+      },
+      "response": []
+    },
+    {
+      "name": "02.6 - Get User Info (with Access Token)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/oauth/userinfo",
+          "host": ["{{baseUrl}}"],
+          "path": ["oauth", "userinfo"]
+        },
+        "description": "Get authenticated user information using the access token. Returns claims based on granted scopes."
+      },
+      "response": []
+    },
+    {
+      "name": "02.7 - Introspect Access Token",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "text"
+            },
+            {
+              "key": "client_id",
+              "value": "{{clientId}}",
+              "type": "text"
+            },
+            {
+              "key": "client_secret",
+              "value": "{{clientSecret}}",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/oauth/introspect",
+          "host": ["{{baseUrl}}"],
+          "path": ["oauth", "introspect"]
+        },
+        "description": "Introspect an access token to get its metadata (active status, expiration, scopes, etc.)."
+      },
+      "response": []
+    },
+    {
+      "name": "02.8 - Refresh Access Token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const response = pm.response.json();",
+              "",
+              "if (response.access_token) {",
+              "    pm.environment.set('accessToken', response.access_token);",
+              "    console.log('New Access Token saved');",
+              "}",
+              "",
+              "if (response.refresh_token) {",
+              "    pm.environment.set('refreshToken', response.refresh_token);",
+              "    console.log('New Refresh Token saved');",
+              "}",
+              "",
+              "pm.test('Token refresh successful', function() {",
+              "    pm.response.to.have.status(200);",
+              "    pm.expect(response).to.have.property('access_token');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "grant_type",
+              "value": "refresh_token",
+              "type": "text"
+            },
+            {
+              "key": "refresh_token",
+              "value": "{{refreshToken}}",
+              "type": "text"
+            },
+            {
+              "key": "client_id",
+              "value": "{{clientId}}",
+              "type": "text"
+            },
+            {
+              "key": "client_secret",
+              "value": "{{clientSecret}}",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/oauth/token",
+          "host": ["{{baseUrl}}"],
+          "path": ["oauth", "token"]
+        },
+        "description": "Use the refresh token to get a new access token without requiring user interaction."
+      },
+      "response": []
+    },
+    {
+      "name": "02.9 - Client Credentials Grant",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const response = pm.response.json();",
+              "",
+              "pm.test('Client credentials grant successful', function() {",
+              "    pm.response.to.have.status(200);",
+              "    pm.expect(response).to.have.property('access_token');",
+              "    pm.expect(response).to.have.property('token_type', 'Bearer');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "grant_type",
+              "value": "client_credentials",
+              "type": "text"
+            },
+            {
+              "key": "client_id",
+              "value": "{{clientId}}",
+              "type": "text"
+            },
+            {
+              "key": "client_secret",
+              "value": "{{clientSecret}}",
+              "type": "text"
+            },
+            {
+              "key": "scope",
+              "value": "openid",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/oauth/token",
+          "host": ["{{baseUrl}}"],
+          "path": ["oauth", "token"]
+        },
+        "description": "Get an access token using client credentials (machine-to-machine authentication)."
+      },
+      "response": []
+    },
+    {
+      "name": "02.10 - Revoke Access Token",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "text"
+            },
+            {
+              "key": "token_type_hint",
+              "value": "access_token",
+              "type": "text"
+            },
+            {
+              "key": "client_id",
+              "value": "{{clientId}}",
+              "type": "text"
+            },
+            {
+              "key": "client_secret",
+              "value": "{{clientSecret}}",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/oauth/revoke",
+          "host": ["{{baseUrl}}"],
+          "path": ["oauth", "revoke"]
+        },
+        "description": "Revoke an access token. The token will no longer be valid."
+      },
+      "response": []
+    },
+    {
+      "name": "02.11 - Revoke Refresh Token",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "token",
+              "value": "{{refreshToken}}",
+              "type": "text"
+            },
+            {
+              "key": "token_type_hint",
+              "value": "refresh_token",
+              "type": "text"
+            },
+            {
+              "key": "client_id",
+              "value": "{{clientId}}",
+              "type": "text"
+            },
+            {
+              "key": "client_secret",
+              "value": "{{clientSecret}}",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/oauth/revoke",
+          "host": ["{{baseUrl}}"],
+          "path": ["oauth", "revoke"]
+        },
+        "description": "Revoke a refresh token. This will also invalidate associated access tokens."
+      },
+      "response": []
+    }
+  ]
+}

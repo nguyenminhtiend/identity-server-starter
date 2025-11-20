@@ -1,0 +1,263 @@
+{
+  "info": {
+    "name": "03 - User Authentication",
+    "description": "User registration, login, and logout flows using form-based authentication.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "03.1 - Register New User",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Extract and save session cookie",
+              "const cookies = pm.response.headers.all().filter(h => h.key.toLowerCase() === 'set-cookie');",
+              "if (cookies.length > 0) {",
+              "    const sessionCookie = cookies.find(c => c.value.includes('connect.sid'));",
+              "    if (sessionCookie) {",
+              "        const cookieValue = sessionCookie.value.split(';')[0];",
+              "        pm.environment.set('sessionCookie', cookieValue);",
+              "        console.log('Session cookie saved after registration');",
+              "    }",
+              "}",
+              "",
+              "pm.test('Registration successful', function() {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 302]);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "email",
+              "value": "{{testUserEmail}}",
+              "type": "text"
+            },
+            {
+              "key": "password",
+              "value": "{{testUserPassword}}",
+              "type": "text"
+            },
+            {
+              "key": "confirmPassword",
+              "value": "{{testUserPassword}}",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/register",
+          "host": ["{{baseUrl}}"],
+          "path": ["register"]
+        },
+        "description": "Register a new user account. The user will be automatically logged in after successful registration."
+      },
+      "response": []
+    },
+    {
+      "name": "03.2 - Login Existing User",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Extract and save session cookie",
+              "const cookies = pm.response.headers.all().filter(h => h.key.toLowerCase() === 'set-cookie');",
+              "if (cookies.length > 0) {",
+              "    const sessionCookie = cookies.find(c => c.value.includes('connect.sid'));",
+              "    if (sessionCookie) {",
+              "        const cookieValue = sessionCookie.value.split(';')[0];",
+              "        pm.environment.set('sessionCookie', cookieValue);",
+              "        console.log('Session cookie saved after login');",
+              "    }",
+              "}",
+              "",
+              "pm.test('Login successful', function() {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 302]);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "email",
+              "value": "{{testUserEmail}}",
+              "type": "text"
+            },
+            {
+              "key": "password",
+              "value": "{{testUserPassword}}",
+              "type": "text"
+            },
+            {
+              "key": "rememberMe",
+              "value": "on",
+              "type": "text",
+              "disabled": true
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["login"]
+        },
+        "description": "Login with existing user credentials. Enable 'rememberMe' for extended session (30 days)."
+      },
+      "response": []
+    },
+    {
+      "name": "03.3 - Login with Remember Me",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Extract and save session cookie",
+              "const cookies = pm.response.headers.all().filter(h => h.key.toLowerCase() === 'set-cookie');",
+              "if (cookies.length > 0) {",
+              "    const sessionCookie = cookies.find(c => c.value.includes('connect.sid'));",
+              "    if (sessionCookie) {",
+              "        const cookieValue = sessionCookie.value.split(';')[0];",
+              "        pm.environment.set('sessionCookie', cookieValue);",
+              "        console.log('Session cookie saved with extended expiration');",
+              "    }",
+              "}",
+              "",
+              "pm.test('Login successful with remember me', function() {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 302]);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "email",
+              "value": "{{testUserEmail}}",
+              "type": "text"
+            },
+            {
+              "key": "password",
+              "value": "{{testUserPassword}}",
+              "type": "text"
+            },
+            {
+              "key": "rememberMe",
+              "value": "on",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["login"]
+        },
+        "description": "Login with 'Remember Me' enabled. Session will last 30 days instead of 24 hours."
+      },
+      "response": []
+    },
+    {
+      "name": "03.4 - Logout",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Logout successful', function() {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 302]);",
+              "});",
+              "",
+              "// Clear session cookie",
+              "pm.environment.set('sessionCookie', '');",
+              "console.log('Session cookie cleared');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "{{sessionCookie}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/logout",
+          "host": ["{{baseUrl}}"],
+          "path": ["logout"]
+        },
+        "description": "Logout and destroy the current session."
+      },
+      "response": []
+    },
+    {
+      "name": "03.5 - Get Login Page (HTML)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["login"]
+        },
+        "description": "Get the login page HTML form."
+      },
+      "response": []
+    },
+    {
+      "name": "03.6 - Get Register Page (HTML)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/register",
+          "host": ["{{baseUrl}}"],
+          "path": ["register"]
+        },
+        "description": "Get the registration page HTML form."
+      },
+      "response": []
+    }
+  ]
+}

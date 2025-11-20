@@ -1,0 +1,97 @@
+{
+  "id": "identity-server-env",
+  "name": "Identity Server Environment",
+  "values": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "enabled": true,
+      "type": "default"
+    },
+    {
+      "key": "adminEmail",
+      "value": "admin@example.com",
+      "enabled": true,
+      "type": "default"
+    },
+    {
+      "key": "adminPassword",
+      "value": "Admin123!",
+      "enabled": true,
+      "type": "default"
+    },
+    {
+      "key": "testUserEmail",
+      "value": "testuser@example.com",
+      "enabled": true,
+      "type": "default"
+    },
+    {
+      "key": "testUserPassword",
+      "value": "TestUser123!",
+      "enabled": true,
+      "type": "default"
+    },
+    {
+      "key": "sessionCookie",
+      "value": "",
+      "enabled": true,
+      "type": "default"
+    },
+    {
+      "key": "clientId",
+      "value": "",
+      "enabled": true,
+      "type": "default"
+    },
+    {
+      "key": "clientSecret",
+      "value": "",
+      "enabled": true,
+      "type": "secret"
+    },
+    {
+      "key": "authorizationCode",
+      "value": "",
+      "enabled": true,
+      "type": "default"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "enabled": true,
+      "type": "secret"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "enabled": true,
+      "type": "secret"
+    },
+    {
+      "key": "codeVerifier",
+      "value": "",
+      "enabled": true,
+      "type": "default"
+    },
+    {
+      "key": "codeChallenge",
+      "value": "",
+      "enabled": true,
+      "type": "default"
+    },
+    {
+      "key": "organizationId",
+      "value": "",
+      "enabled": true,
+      "type": "default"
+    },
+    {
+      "key": "publicClientId",
+      "value": "",
+      "enabled": true,
+      "type": "default"
+    }
+  ],
+  "_postman_variable_scope": "environment"
+}

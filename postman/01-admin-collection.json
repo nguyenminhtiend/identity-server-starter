@@ -1,0 +1,635 @@
+{
+  "info": {
+    "name": "01 - Admin & Setup",
+    "description": "Admin endpoints for managing clients, organizations, and keys. START HERE to set up your test environment.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01.1 - Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        },
+        "description": "Verify the server is running and healthy."
+      },
+      "response": []
+    },
+    {
+      "name": "01.2 - Admin Login (Get Session)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Extract and save session cookie",
+              "const cookies = pm.response.headers.all().filter(h => h.key.toLowerCase() === 'set-cookie');",
+              "if (cookies.length > 0) {",
+              "    const sessionCookie = cookies.find(c => c.value.includes('connect.sid'));",
+              "    if (sessionCookie) {",
+              "        const cookieValue = sessionCookie.value.split(';')[0];",
+              "        pm.environment.set('sessionCookie', cookieValue);",
+              "        console.log('Session cookie saved:', cookieValue);",
+              "    }",
+              "}",
+              "",
+              "// Verify login success",
+              "pm.test('Login successful', function() {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 302]);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "email",
+              "value": "{{adminEmail}}",
+              "type": "text"
+            },
+            {
+              "key": "password",
+              "value": "{{adminPassword}}",
+              "type": "text"
+            },
+            {
+              "key": "rememberMe",
+              "value": "on",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["login"]
+        },
+        "description": "Login as admin to get session cookie for admin endpoints. The session cookie will be automatically saved to the environment."
+      },
+      "response": []
+    },
+    {
+      "name": "01.3 - Create Organization",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const response = pm.response.json();",
+              "if (response.id) {",
+              "    pm.environment.set('organizationId', response.id);",
+              "    console.log('Organization ID saved:', response.id);",
+              "}",
+              "",
+              "pm.test('Organization created successfully', function() {",
+              "    pm.response.to.have.status(201);",
+              "    pm.expect(response).to.have.property('id');",
+              "    pm.expect(response).to.have.property('name');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Cookie",
+            "value": "{{sessionCookie}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Test Organization\",\n  \"slug\": \"test-org\",\n  \"ownerUserId\": \"admin-user-id\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/organizations",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "organizations"]
+        },
+        "description": "Create a new organization for testing. The organization ID will be saved to the environment."
+      },
+      "response": []
+    },
+    {
+      "name": "01.4 - List Organizations",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "{{sessionCookie}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/admin/organizations?limit=20&offset=0",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "organizations"],
+          "query": [
+            {
+              "key": "limit",
+              "value": "20"
+            },
+            {
+              "key": "offset",
+              "value": "0"
+            },
+            {
+              "key": "isActive",
+              "value": "true",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "List all organizations with optional filters."
+      },
+      "response": []
+    },
+    {
+      "name": "01.5 - Get Organization Details",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "{{sessionCookie}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/admin/organizations/{{organizationId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "organizations", "{{organizationId}}"]
+        },
+        "description": "Get details of a specific organization."
+      },
+      "response": []
+    },
+    {
+      "name": "01.6 - Create Confidential Client",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const response = pm.response.json();",
+              "if (response.clientId) {",
+              "    pm.environment.set('clientId', response.clientId);",
+              "    console.log('Client ID saved:', response.clientId);",
+              "}",
+              "if (response.clientSecret) {",
+              "    pm.environment.set('clientSecret', response.clientSecret);",
+              "    console.log('Client Secret saved (store this securely!)');",
+              "}",
+              "",
+              "pm.test('Client created successfully', function() {",
+              "    pm.response.to.have.status(201);",
+              "    pm.expect(response).to.have.property('clientId');",
+              "    pm.expect(response).to.have.property('clientSecret');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Cookie",
+            "value": "{{sessionCookie}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Test Confidential Client\",\n  \"clientType\": \"confidential\",\n  \"redirectUris\": [\"http://localhost:4000/callback\"],\n  \"grantTypes\": [\"authorization_code\", \"refresh_token\", \"client_credentials\"],\n  \"allowedScopes\": \"openid email profile\",\n  \"organizationId\": \"{{organizationId}}\",\n  \"logoUrl\": \"https://example.com/logo.png\",\n  \"homepageUrl\": \"https://example.com\",\n  \"privacyUrl\": \"https://example.com/privacy\",\n  \"termsUrl\": \"https://example.com/terms\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/clients",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "clients"]
+        },
+        "description": "Create a confidential OAuth client. The client ID and secret will be saved to the environment. NOTE: The secret is only shown once!"
+      },
+      "response": []
+    },
+    {
+      "name": "01.7 - Create Public Client",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const response = pm.response.json();",
+              "if (response.clientId) {",
+              "    pm.environment.set('publicClientId', response.clientId);",
+              "    console.log('Public Client ID saved:', response.clientId);",
+              "}",
+              "",
+              "pm.test('Public client created successfully', function() {",
+              "    pm.response.to.have.status(201);",
+              "    pm.expect(response).to.have.property('clientId');",
+              "    pm.expect(response.clientSecret).to.be.undefined;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Cookie",
+            "value": "{{sessionCookie}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Test Public Client (SPA)\",\n  \"clientType\": \"public\",\n  \"redirectUris\": [\"http://localhost:5000/callback\"],\n  \"grantTypes\": [\"authorization_code\", \"refresh_token\"],\n  \"allowedScopes\": \"openid email profile\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/clients",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "clients"]
+        },
+        "description": "Create a public OAuth client (for SPAs/mobile apps). Public clients don't have a secret."
+      },
+      "response": []
+    },
+    {
+      "name": "01.8 - List All Clients",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "{{sessionCookie}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/admin/clients?limit=20&offset=0",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "clients"],
+          "query": [
+            {
+              "key": "limit",
+              "value": "20"
+            },
+            {
+              "key": "offset",
+              "value": "0"
+            },
+            {
+              "key": "organizationId",
+              "value": "{{organizationId}}",
+              "disabled": true
+            },
+            {
+              "key": "clientType",
+              "value": "confidential",
+              "disabled": true
+            },
+            {
+              "key": "isActive",
+              "value": "true",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "List all OAuth clients with optional filters."
+      },
+      "response": []
+    },
+    {
+      "name": "01.9 - Get Client Details",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "{{sessionCookie}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/admin/clients/{{clientId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "clients", "{{clientId}}"]
+        },
+        "description": "Get details of a specific client."
+      },
+      "response": []
+    },
+    {
+      "name": "01.10 - Update Client",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Cookie",
+            "value": "{{sessionCookie}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Updated Client Name\",\n  \"redirectUris\": [\"http://localhost:4000/callback\", \"http://localhost:4001/callback\"],\n  \"allowedScopes\": \"openid email profile\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/clients/{{clientId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "clients", "{{clientId}}"]
+        },
+        "description": "Update client metadata."
+      },
+      "response": []
+    },
+    {
+      "name": "01.11 - Regenerate Client Secret",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const response = pm.response.json();",
+              "if (response.clientSecret) {",
+              "    pm.environment.set('clientSecret', response.clientSecret);",
+              "    console.log('New Client Secret saved (store this securely!)');",
+              "}",
+              "",
+              "pm.test('Secret regenerated successfully', function() {",
+              "    pm.response.to.have.status(200);",
+              "    pm.expect(response).to.have.property('clientSecret');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "{{sessionCookie}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/admin/clients/{{clientId}}/secret",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "clients", "{{clientId}}", "secret"]
+        },
+        "description": "Regenerate the client secret (confidential clients only). The old secret will be invalidated immediately."
+      },
+      "response": []
+    },
+    {
+      "name": "01.12 - Get Organization Clients",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "{{sessionCookie}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/admin/organizations/{{organizationId}}/clients",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "organizations", "{{organizationId}}", "clients"]
+        },
+        "description": "Get all clients belonging to a specific organization."
+      },
+      "response": []
+    },
+    {
+      "name": "01.13 - List All Keys",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "{{sessionCookie}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/admin/keys",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "keys"]
+        },
+        "description": "List all signing keys (active and inactive) with metadata."
+      },
+      "response": []
+    },
+    {
+      "name": "01.14 - Get Primary Key",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "{{sessionCookie}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/admin/keys/primary",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "keys", "primary"]
+        },
+        "description": "Get the current primary signing key metadata."
+      },
+      "response": []
+    },
+    {
+      "name": "01.15 - Get Key Rotation Status",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "{{sessionCookie}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/admin/keys/rotation-status",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "keys", "rotation-status"]
+        },
+        "description": "Check the next scheduled key rotation time."
+      },
+      "response": []
+    },
+    {
+      "name": "01.16 - Trigger Key Rotation",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Cookie",
+            "value": "{{sessionCookie}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"confirm\": true\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/keys/rotate",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "keys", "rotate"]
+        },
+        "description": "Manually trigger a key rotation. This will generate a new signing key and set it as primary."
+      },
+      "response": []
+    },
+    {
+      "name": "01.17 - Update Organization",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Cookie",
+            "value": "{{sessionCookie}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Updated Organization Name\",\n  \"slug\": \"updated-org\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/organizations/{{organizationId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "organizations", "{{organizationId}}"]
+        },
+        "description": "Update organization information."
+      },
+      "response": []
+    },
+    {
+      "name": "01.18 - Deactivate Client (Soft Delete)",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "{{sessionCookie}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/admin/clients/{{clientId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "clients", "{{clientId}}"]
+        },
+        "description": "Deactivate a client (soft delete). The client will be marked as inactive but not permanently deleted."
+      },
+      "response": []
+    },
+    {
+      "name": "01.19 - Delete Client Permanently",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "{{sessionCookie}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/admin/clients/{{clientId}}?hard=true",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "clients", "{{clientId}}"],
+          "query": [
+            {
+              "key": "hard",
+              "value": "true"
+            }
+          ]
+        },
+        "description": "Permanently delete a client. This action cannot be undone."
+      },
+      "response": []
+    },
+    {
+      "name": "01.20 - Deactivate Organization (Soft Delete)",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "{{sessionCookie}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/admin/organizations/{{organizationId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "organizations", "{{organizationId}}"]
+        },
+        "description": "Deactivate an organization (soft delete)."
+      },
+      "response": []
+    },
+    {
+      "name": "01.21 - Delete Organization Permanently",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "{{sessionCookie}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/admin/organizations/{{organizationId}}?hard=true",
+          "host": ["{{baseUrl}}"],
+          "path": ["admin", "organizations", "{{organizationId}}"],
+          "query": [
+            {
+              "key": "hard",
+              "value": "true"
+            }
+          ]
+        },
+        "description": "Permanently delete an organization. This action cannot be undone."
+      },
+      "response": []
+    }
+  ]
+}

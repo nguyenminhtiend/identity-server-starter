@@ -16,6 +16,12 @@ export function createAuthRouter(services: Services): RouterType {
   const router: RouterType = Router();
 
   /**
+   * GET /
+   * Display home page (requires authentication)
+   */
+  router.get('/', authController.showHome);
+
+  /**
    * GET /login
    * Display login page
    */

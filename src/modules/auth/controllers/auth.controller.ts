@@ -19,6 +19,34 @@ export class AuthController {
   constructor(private userService: IUserService) {}
 
   /**
+   * GET /
+   * Display home page (requires authentication)
+   */
+  showHome = async (req: Request, res: Response): Promise<void> => {
+    // Check if user is authenticated
+    if (!req.session.userId) {
+      res.redirect('/login');
+      return;
+    }
+
+    // Get user info
+    const user = await this.userService.getUserById(req.session.userId);
+
+    if (!user) {
+      // User not found, clear session and redirect to login
+      req.session.destroy(() => {
+        res.redirect('/login');
+      });
+      return;
+    }
+
+    res.render('auth/views/home', {
+      userId: user.id,
+      email: user.email,
+    });
+  };
+
+  /**
    * GET /login
    * Display login page
    */
