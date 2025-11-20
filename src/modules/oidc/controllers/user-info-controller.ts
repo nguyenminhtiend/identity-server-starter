@@ -1,6 +1,6 @@
 import { type Request, type Response } from 'express';
 import type { ITokenService } from '../../oauth/services/interfaces/token-service.interface.js';
-import { db, users } from '../../../shared/database/index.js';
+import { db, users } from '../../../shared/database';
 import { eq } from 'drizzle-orm';
 import type { OAuthJWTPayload } from '../../../shared/types/oauth.type.js';
 

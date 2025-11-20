@@ -1,4 +1,4 @@
-import { config } from '../../../shared/config/index.js';
+import { config } from '../../../shared/config';
 
 /**
  * OpenID Connect Discovery Document

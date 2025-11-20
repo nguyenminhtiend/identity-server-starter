@@ -73,6 +73,7 @@ trigger: always_on
 - Follow OAuth 2.0 and OIDC security best practices
 
 ## Workflow & Verification
+
 - **After writing or modifying code**, you MUST run the quality check command: `pnpm quality`
 - **If the check fails**:
   1. Read the error output carefully.

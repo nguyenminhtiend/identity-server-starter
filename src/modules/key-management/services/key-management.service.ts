@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { eq, and, desc } from 'drizzle-orm';
 import type * as jose from 'jose';
-import { db, signingKeys } from '../../../shared/database/index.js';
+import { db, signingKeys } from '../../../shared/database';
 import { encryptAES, decryptAES, generateRSAKeyPair } from '../../../shared/utils/crypto.util.js';
 import { logger } from '../../../shared/utils/logger.util.js';
 

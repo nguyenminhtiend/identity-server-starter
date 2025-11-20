@@ -1,4 +1,4 @@
-import { db, signingKeys } from '../../../shared/database/index.js';
+import { db, signingKeys } from '../../../shared/database';
 import { generateRSAKeyPair, encryptAES } from '../../../shared/utils/crypto.util.js';
 import { logger } from '../../../shared/utils/logger.util.js';
 import * as dotenv from 'dotenv';
