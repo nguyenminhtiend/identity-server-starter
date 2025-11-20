@@ -1,11 +1,6 @@
-import { db, users, organizations, clients } from './index.js';
-import {
-  hashPassword,
-  generateRandomToken,
-  sha256Hash as _sha256Hash,
-} from '../utils/crypto.util.js';
-import { KeyGenerationService } from '../../modules/key-management/services/key-generation.service.js';
-import { logger } from '../utils/logger.util.js';
+import { db, users, organizations, clients } from '.';
+import { hashPassword, generateRandomToken, sha256Hash as _sha256Hash, logger } from '../utils';
+import { KeyGenerationService } from '../../modules/key-management/services';
 import * as dotenv from 'dotenv';
 
 dotenv.config();

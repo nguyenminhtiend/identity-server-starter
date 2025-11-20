@@ -5,10 +5,9 @@ import { RedisStore } from 'connect-redis';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { config } from './shared/config';
-import { errorHandler } from './shared/middleware/error-handler.middleware.js';
-import { helmetConfig, devCorsMiddleware } from './shared/middleware/security.middleware.js';
-import { configureDIContainer } from './shared/di/container.config.js';
-import { logger } from './shared/utils/logger.util.js';
+import { errorHandler, helmetConfig, devCorsMiddleware } from './shared/middleware';
+import { configureDIContainer } from './shared/di';
+import { logger } from './shared/utils';
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -21,8 +20,8 @@ async function createServer(): Promise<Application> {
 
   // Import routes AFTER DI container is configured
   // This ensures services are available when routes initialize
-  const { default: oauthRoutes } = await import('./modules/oauth/routes/index.js');
-  const { default: oidcRoutes } = await import('./modules/oidc/routes/index.js');
+  const { default: oauthRoutes } = await import('./modules/oauth/routes');
+  const { default: oidcRoutes } = await import('./modules/oidc/routes');
 
   const app = express();
 

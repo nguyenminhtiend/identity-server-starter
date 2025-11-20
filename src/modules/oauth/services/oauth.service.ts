@@ -6,21 +6,21 @@ import {
   refreshTokens,
   consents,
   users,
-} from '../../../shared/database/index.js';
+} from '../../../shared/database';
 import {
   generateRandomToken,
   sha256Hash,
   verifyPassword,
   constantTimeCompare as _constantTimeCompare,
-} from '../../../shared/utils/crypto.util.js';
-import { PKCEService } from './pkce.service.js';
-import type { UserInfo } from './token.service.js';
-import type { ITokenService } from './interfaces/token-service.interface.js';
+} from '../../../shared/utils';
+import { PKCEService } from '.';
 import type {
+  ITokenService,
   IOAuthService,
   OAuthClient,
   TokenResponse,
-} from './interfaces/oauth-service.interface.js';
+  UserInfo,
+} from './interfaces';
 
 /**
  * Authorization code record
