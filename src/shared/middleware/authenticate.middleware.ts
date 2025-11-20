@@ -153,7 +153,7 @@ export function requireClientAuth(req: Request, _res: Response, _next: NextFunct
  * Requires user to be authenticated and have admin role
  * Used for admin panel routes
  */
-export function requireAdmin(req: Request, res: Response, next: NextFunction): void {
+export async function requireAdmin(req: Request, res: Response, next: NextFunction): Promise<void> {
   const authReq = req as AuthenticatedRequest;
 
   if (!req.session?.userId) {
@@ -161,20 +161,29 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction): v
     return;
   }
 
-  // TODO: Check if user has admin role in database
-  // For now, we'll implement basic session check
-  // This will be enhanced when user roles are added to the schema
+  // Import db and users here to avoid circular dependencies
+  const { db, users } = await import('../database/index.js');
+  const { eq } = await import('drizzle-orm');
+
+  // Query database to check admin role
+  const userResult = await db.select().from(users).where(eq(users.id, req.session.userId)).limit(1);
+
+  if (!userResult[0]) {
+    res.redirect('/login');
+    return;
+  }
+
+  const user = userResult[0];
+
+  if (!user.isAdmin) {
+    throw OAuthErrors.ACCESS_DENIED('Admin access required');
+  }
 
   authReq.user = {
-    id: req.session.userId,
-    email: req.session.userEmail ?? '',
-    email_verified: req.session.emailVerified ?? false,
+    id: user.id,
+    email: user.email,
+    email_verified: user.emailVerified,
   };
-
-  // TODO: Verify admin role
-  // if (!user.isAdmin) {
-  //   throw OAuthErrors.ACCESS_DENIED('Admin access required');
-  // }
 
   next();
 }

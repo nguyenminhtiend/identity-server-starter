@@ -39,6 +39,7 @@ async function seed() {
           email: 'test@example.com',
           passwordHash: testPassword,
           emailVerified: true,
+          isAdmin: true,
         })
         .returning();
 
@@ -236,7 +237,9 @@ async function seed() {
     if (testUser === undefined || testUser === null) {
       throw new Error('Test user is undefined at summary stage');
     }
-    logger.info(`   • Test User: ${testUser.email} / Test123456!`);
+    logger.info(
+      `   • Test User: ${testUser.email} / Test123456! (Admin: ${testUser.isAdmin ?? true})`
+    );
     if (testOrganization) {
       logger.info(`   • Organization: ${testOrganization.name} (${testOrganization.slug})`);
     }
@@ -260,9 +263,37 @@ async function seed() {
         logger.info(`  Client ID:     ${mobileClient.clientId}`);
       }
       logger.info('─'.repeat(60));
-    } else {
-      logger.info('ℹ️  No new clients created (all already exist)');
     }
+
+    // Display all existing clients for reference
+    logger.info('\n📋 All OAuth Clients in Database:');
+    logger.info('─'.repeat(60));
+    const allClients = await db.select().from(clients).where(eq(clients.isActive, true));
+
+    if (allClients.length === 0) {
+      logger.info('  No clients found');
+    } else {
+      for (const client of allClients) {
+        logger.info(`\n  ${client.name}:`);
+        logger.info(`    Client ID:   ${client.clientId}`);
+        logger.info(`    Type:        ${client.clientType}`);
+        logger.info(`    Grant Types: ${client.grantTypes.join(', ')}`);
+        if (client.clientType === 'confidential') {
+          logger.info(`    Secret:      [stored securely - only shown during creation]`);
+        }
+      }
+    }
+    logger.info(`\n${'─'.repeat(60)}`);
+
+    logger.info('\n💡 To test OAuth flow:');
+    logger.info('   export CLIENT_ID="<client_id_from_above>"');
+    if (confidentialClientSecret) {
+      logger.info(`   export CLIENT_SECRET="${confidentialClientSecret}"`);
+    } else {
+      logger.info('   export CLIENT_SECRET="<secret_from_creation>"');
+    }
+    logger.info('   export REDIRECT_URI="http://localhost:3001/callback"');
+    logger.info('   ./scripts/test-oauth-flow.sh\n');
   } catch (error) {
     logger.error({ err: error }, '❌ Seeding failed');
     throw error;

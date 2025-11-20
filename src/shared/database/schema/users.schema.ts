@@ -10,10 +10,12 @@ export const users = pgTable(
     email: varchar('email', { length: 255 }).notNull().unique(),
     passwordHash: varchar('password_hash', { length: 255 }).notNull(),
     emailVerified: boolean('email_verified').default(false).notNull(),
+    isAdmin: boolean('is_admin').default(false).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
   (table) => ({
     emailIdx: index('users_email_idx').on(table.email),
+    isAdminIdx: index('users_is_admin_idx').on(table.isAdmin),
   })
 );

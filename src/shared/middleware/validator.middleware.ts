@@ -31,7 +31,17 @@ export function validate(schema: ZodType, options: ValidateOptions = {}) {
       const parsed = stripUnknown ? schema.parse(data) : schema.parse(data);
 
       // Replace request data with validated data
-      (req as unknown as Record<string, unknown>)[target] = parsed;
+      // Note: req.query is read-only in Express, so we need to use Object.defineProperty
+      if (target === 'query') {
+        Object.defineProperty(req, 'query', {
+          value: parsed,
+          writable: true,
+          enumerable: true,
+          configurable: true,
+        });
+      } else {
+        (req as unknown as Record<string, unknown>)[target] = parsed;
+      }
 
       next();
     } catch (error) {
